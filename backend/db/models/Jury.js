@@ -2,13 +2,11 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   const Jury = sequelize.define("Jury", {
-    isActive: { type: DataTypes.BOOLEAN, default: true },
+    isActive: { 
+      type: DataTypes.BOOLEAN, 
+      defaultValue: true, // Use `defaultValue` instead of `default`
+    },
   });
 
-  Jury.associate = (models) => {
-    Jury.belongsTo(models.User, { foreignKey: "userId" });
-    Jury.belongsTo(models.Project, { foreignKey: "projectId" });
-  };
-
-  return Jury;
+  return Jury; // No need to explicitly define `userId` or `projectId`
 };
