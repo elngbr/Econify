@@ -1,36 +1,65 @@
+// routes/userRoutes.js
 const express = require("express");
 const router = express.Router();
 const { User } = require("../db/models");
 
-router.post("/", async (req, res, next) => {
+// Create a new user (either a student or professor)
+router.post("/", async (req, res) => {
   try {
-    const { name, email, role } = req.body;
-    const user = await User.create({ name, email, role });
+    console.log("Request body:", req.body);  // Log incoming request body
+
+    const { name, email, password, role } = req.body;
+
+    // Validate role
+    if (role !== "student" && role !== "professor") {
+      return res.status(400).json({ error: "Role must be 'student' or 'professor'" });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Create user in the database
+    const user = await User.create({ name, email, password, role });
     res.status(201).json(user);
   } catch (err) {
-    next(err);
+    console.error("Error creating user:", err);  // Detailed error log
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 });
 
-router.get("/", async (req, res, next) => {
+// Get all users
+router.get("/", async (req, res) => {
   try {
     const users = await User.findAll();
     res.status(200).json(users);
   } catch (err) {
-    next(err);
+    console.error("Error fetching users:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+// Get all students
+router.get("/students", async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      res.status(404).json({ message: "The user does not exist!" });
-    } else {
-      res.status(200).json(user);
-    }
+    const students = await User.findAll({ where: { role: "student" } });
+    res.status(200).json(students);
   } catch (err) {
-    next(err);
+    console.error("Error fetching students:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get all professors
+router.get("/professors", async (req, res) => {
+  try {
+    const professors = await User.findAll({ where: { role: "professor" } });
+    res.status(200).json(professors);
+  } catch (err) {
+    console.error("Error fetching professors:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

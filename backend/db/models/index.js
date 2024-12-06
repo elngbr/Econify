@@ -4,19 +4,17 @@ const path = require("path");
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
-  storage: path.join(__dirname, "database.sqlite"),
+  storage: path.join(__dirname, "database.sqlite"), // Ensure the database file is in the correct location
 });
 
 const models = {};
 
-// Importing models
-models.User = require("./User")(sequelize, Sequelize);  // Ensure sequelize and Sequelize are passed in correctly
-models.Project = require("./Project")(sequelize, Sequelize);
-models.Deliverable = require("./Deliverable")(sequelize, Sequelize);
-models.Jury = require("./Jury")(sequelize, Sequelize);
-models.Grade = require("./Grade")(sequelize, Sequelize);
+// Import models
+models.User = require("./User")(sequelize, Sequelize);
+models.Professor = require("./Professor")(sequelize, Sequelize);
+models.Student = require("./Student")(sequelize, Sequelize);
 
-// Associations
+// Define associations (if any)
 Object.values(models).forEach((model) => {
   if (model.associate) {
     model.associate(models);

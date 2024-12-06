@@ -3,17 +3,32 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   const User = sequelize.define("User", {
-    name: { type: DataTypes.STRING, allowNull: false },
-    email: { type: DataTypes.STRING, unique: true, allowNull: false },
-    role: { type: DataTypes.ENUM("STUDENT", "PROFESSOR"), allowNull: false },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isIn: [['student', 'professor']],
+      }
+    }
   });
-
-  User.associate = (models) => {
-    // Add associations
-    User.hasMany(models.Project, { foreignKey: "createdBy" });
-    User.belongsToMany(models.Project, { through: models.Jury, as: "Juries" });
-    User.hasMany(models.Grade, { foreignKey: "gradedBy" });
-  };
 
   return User;
 };
