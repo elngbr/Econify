@@ -11,6 +11,7 @@ const models = {};
 
 // Import models
 models.User = require("./User")(sequelize, Sequelize);
+models.Project = require("./Project")(sequelize, Sequelize);
 
 
 // Define associations (if any)

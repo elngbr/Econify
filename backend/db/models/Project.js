@@ -1,3 +1,4 @@
+// db/models/Project.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -13,20 +14,21 @@ module.exports = (sequelize) => {
     },
     description: {
       type: DataTypes.TEXT,
+      allowNull: true,
     },
-    userId: {  // Foreign key linking to the 'User' table
+    userId: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Users', // Refers to the 'Users' table
-        key: 'id',      // Refers to the 'id' column in the 'Users' table
+        model: "Users", // This should reference the 'Users' table
+        key: "id",      // The key in the 'Users' table
       },
-      allowNull: false, // Ensure userId must be provided
+      allowNull: false, // Ensure every project must be linked to a user
     },
   });
 
-  // Define the association with the User (user can be a student or professor)
+  // Define the association with the User model
   Project.associate = (models) => {
-    Project.belongsTo(models.User, { foreignKey: 'userId', as: 'user' }); // Associate Project to User
+    Project.belongsTo(models.User, { foreignKey: "userId", as: "user" }); // A Project belongs to a User
   };
 
   return Project;

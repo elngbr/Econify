@@ -5,7 +5,7 @@ const { sequelize } = require("./db/models"); // Import sequelize from models
 
 // Import the user routes
 const userRoutes = require("./routes/userRoutes");
-// const projectRoutes = require("./routes/projectRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 // const deliverableRoutes = require("./routes/deliverableRoutes");
 // const gradeRoutes = require("./routes/gradeRoutes");
 
@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 
 // // Set up user routes
 app.use("/api/users", userRoutes);
-// app.use("/api/projects", projectRoutes);
+app.use("/api/projects", projectRoutes);
 // app.use("/api/deliverables", deliverableRoutes);
 // app.use("/api/grades", gradeRoutes);
 
@@ -28,7 +28,7 @@ app.use("/api/users", userRoutes);
     console.log("Database connected!");
 
     // Force sync (this will drop existing tables and recreate them)
-    await sequelize.sync({ force: true});
+    await sequelize.sync({ force: false});
     console.log("Database synced!");
 
     // Start the server

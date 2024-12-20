@@ -25,7 +25,7 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isIn: [['student', 'professor']], // Ensure role is either 'student' or 'professor'
+        isIn: [["student", "professor"]], // Ensure role is either 'student' or 'professor'
       },
     },
     // Common fields (applicable for both student and professor)
@@ -52,6 +52,12 @@ module.exports = (sequelize) => {
       allowNull: true, // Courses can be null for students
     },
   });
-
+  User.associate = (models) => {
+    // Define relationship to Project
+    User.hasMany(models.Project, {
+      foreignKey: "userId",
+      as: "projects",
+    });
+  };
   return User;
 };
