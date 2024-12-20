@@ -1,19 +1,16 @@
+// routes/userRoutes.js
 const express = require("express");
 const router = express.Router();
 const { User } = require("../db/models");
 
-// Create a new user (either a student or professor)
+// Create a new user (student or professor)
 router.post("/", async (req, res) => {
   try {
-    console.log("Request body:", req.body); // Log incoming request body
-
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, major, year, office, courses, department } = req.body;
 
     // Validate role
-    if (role !== "student" && role !== "professor") {
-      return res
-        .status(400)
-        .json({ error: "Role must be 'student' or 'professor'" });
+    if (!["student", "professor"].includes(role)) {
+      return res.status(400).json({ error: "Role must be 'student' or 'professor'" });
     }
 
     // Check if email already exists
@@ -22,14 +19,23 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Email already exists" });
     }
 
-    // Create user in the database
-    const user = await User.create({ name, email, password, role });
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+      major: role === "student" ? major : null,
+      year: role === "student" ? year : null,
+      office: role === "professor" ? office : null,
+      courses: role === "professor" ? courses : null,
+      department
+    });
+
     res.status(201).json(user);
   } catch (err) {
-    console.error("Error creating user:", err); // Detailed error log
-    res
-      .status(500)
-      .json({ error: "Internal server error", details: err.message });
+    console.error("Error creating user:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -80,10 +86,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update a user by ID (Full update using PUT)
+// Update a user by ID (Full update)
 router.put("/:id", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, major, year, office, courses, department } = req.body;
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
@@ -91,13 +97,11 @@ router.put("/:id", async (req, res) => {
     }
 
     // Validate role
-    if (role && role !== "student" && role !== "professor") {
-      return res
-        .status(400)
-        .json({ error: "Role must be 'student' or 'professor'" });
+    if (role && !["student", "professor"].includes(role)) {
+      return res.status(400).json({ error: "Role must be 'student' or 'professor'" });
     }
 
-    // Check if the email is already taken by another user (skip if it's the same user)
+    // Check if the email is taken by another user
     if (email && email !== user.email) {
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
@@ -105,8 +109,19 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    // Update the user data
-    await user.update({ name, email, password, role });
+    // Update user
+    await user.update({
+      name,
+      email,
+      password,
+      role,
+      major: role === "student" ? major : null,
+      year: role === "student" ? year : null,
+      office: role === "professor" ? office : null,
+      courses: role === "professor" ? courses : null,
+      department
+    });
+
     res.status(200).json(user);
   } catch (err) {
     console.error("Error updating user:", err);
@@ -114,24 +129,22 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Patch a user by ID (Partial update)
+// Partially Update User by ID (PATCH)
 router.patch("/:id", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, major, year, office, courses, department } = req.body;
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Check for individual fields to update and validate them
-    if (role && role !== "student" && role !== "professor") {
-      return res
-        .status(400)
-        .json({ error: "Role must be 'student' or 'professor'" });
+    // Validate role
+    if (role && !["student", "professor"].includes(role)) {
+      return res.status(400).json({ error: "Role must be 'student' or 'professor'" });
     }
 
-    // Check if the email is already taken by another user (skip if it's the same user)
+    // Check if the email is taken by another user
     if (email && email !== user.email) {
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
@@ -139,12 +152,17 @@ router.patch("/:id", async (req, res) => {
       }
     }
 
-    // Update only the fields provided (partial update)
+    // Update only the provided fields
     const updatedUser = await user.update({
       name: name || user.name,
       email: email || user.email,
       password: password || user.password,
       role: role || user.role,
+      major: role === "student" ? major : user.major,
+      year: role === "student" ? year : user.year,
+      office: role === "professor" ? office : user.office,
+      courses: role === "professor" ? courses : user.courses,
+      department: department || user.department
     });
 
     res.status(200).json(updatedUser);
