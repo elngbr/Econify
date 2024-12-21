@@ -11,7 +11,9 @@ const isStudent = async (req, res, next) => {
     }
 
     if (user.role !== "student") {
-      return res.status(403).json({ error: "Only students can create projects" });
+      return res
+        .status(403)
+        .json({ error: "Only students can create projects" });
     }
 
     next(); // Proceed to the next middleware or route handler
@@ -33,7 +35,7 @@ router.post("/", isStudent, async (req, res) => {
       userId,
     });
 
-    res.status(201).json(project);  // Return the created project
+    res.status(201).json(project); // Return the created project
   } catch (err) {
     console.error("Error creating project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -44,7 +46,7 @@ router.post("/", isStudent, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const projects = await Project.findAll();
-    res.status(200).json(projects);  // Return all projects
+    res.status(200).json(projects); // Return all projects
   } catch (err) {
     console.error("Error fetching projects:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -69,7 +71,7 @@ router.get("/user/:userId", async (req, res) => {
 
     // Fetch projects linked to the userId
     const projects = await Project.findAll({ where: { userId } });
-    res.status(200).json(projects);  // Return the user's projects
+    res.status(200).json(projects); // Return the user's projects
   } catch (err) {
     console.error("Error fetching projects by userId:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -90,7 +92,9 @@ router.patch("/:id", async (req, res) => {
 
     // Check if the user is authorized to update the project
     if (project.userId !== userId) {
-      return res.status(403).json({ error: "Unauthorized to update this project" });
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to update this project" });
     }
 
     // Update the project fields
@@ -99,7 +103,7 @@ router.patch("/:id", async (req, res) => {
 
     await project.save();
 
-    res.status(200).json(project);  // Return the updated project
+    res.status(200).json(project); // Return the updated project
   } catch (err) {
     console.error("Error updating project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -120,7 +124,9 @@ router.put("/:id", async (req, res) => {
 
     // Check if the user is authorized to update the project
     if (project.userId !== userId) {
-      return res.status(403).json({ error: "Unauthorized to update this project" });
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to update this project" });
     }
 
     // Replace the entire project with the new data
@@ -129,7 +135,7 @@ router.put("/:id", async (req, res) => {
 
     await project.save();
 
-    res.status(200).json(project);  // Return the replaced project
+    res.status(200).json(project); // Return the replaced project
   } catch (err) {
     console.error("Error replacing project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -150,11 +156,13 @@ router.delete("/:id", async (req, res) => {
 
     // Check if the user is authorized to delete the project
     if (project.userId !== userId) {
-      return res.status(403).json({ error: "Unauthorized to delete this project" });
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to delete this project" });
     }
 
-    await project.destroy();  // Delete the project
-    res.status(200).json({ message: "Project deleted successfully" });  // Return success message
+    await project.destroy(); // Delete the project
+    res.status(200).json({ message: "Project deleted successfully" }); // Return success message
   } catch (err) {
     console.error("Error deleting project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -181,7 +189,7 @@ router.post("/users/:userId/projects", async (req, res) => {
       userId,
     });
 
-    res.status(201).json(project);  // Return the created project
+    res.status(201).json(project); // Return the created project
   } catch (err) {
     console.error("Error creating project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -200,7 +208,7 @@ router.get("/users/:userId/projects", async (req, res) => {
 
     // Fetch all projects for the user
     const projects = await Project.findAll({ where: { userId } });
-    res.status(200).json(projects);  // Return the user's projects
+    res.status(200).json(projects); // Return the user's projects
   } catch (err) {
     console.error("Error fetching user's projects:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -225,7 +233,7 @@ router.get("/users/:userId/projects/:projectId", async (req, res) => {
       return res.status(404).json({ error: "Project not found for this user" });
     }
 
-    res.status(200).json(project);  // Return the project
+    res.status(200).json(project); // Return the project
   } catch (err) {
     console.error("Error fetching project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -255,7 +263,7 @@ router.put("/users/:userId/projects/:projectId", async (req, res) => {
 
     await project.save();
 
-    res.status(200).json(project);  // Return the updated project
+    res.status(200).json(project); // Return the updated project
   } catch (err) {
     console.error("Error updating project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -278,8 +286,8 @@ router.delete("/users/:userId/projects/:projectId", async (req, res) => {
       return res.status(404).json({ error: "Project not found" });
     }
 
-    await project.destroy();  // Delete the project
-    res.status(200).json({ message: "Project deleted successfully" });  // Return success message
+    await project.destroy(); // Delete the project
+    res.status(200).json({ message: "Project deleted successfully" }); // Return success message
   } catch (err) {
     console.error("Error deleting project:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -296,8 +304,8 @@ router.delete("/users/:userId/projects", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    await Project.destroy({ where: { userId } });  // Delete all projects linked to this user
-    res.status(200).json({ message: "All projects deleted successfully" });  // Return success message
+    await Project.destroy({ where: { userId } }); // Delete all projects linked to this user
+    res.status(200).json({ message: "All projects deleted successfully" }); // Return success message
   } catch (err) {
     console.error("Error deleting user's projects:", err);
     res.status(500).json({ error: "Internal server error" });
