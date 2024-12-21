@@ -28,36 +28,53 @@ module.exports = (sequelize) => {
         isIn: [["student", "professor"]], // Ensure role is either 'student' or 'professor'
       },
     },
-    // Common fields (applicable for both student and professor)
     department: {
       type: DataTypes.STRING,
-      allowNull: true, // Can be null for students if not applicable
+      allowNull: true,
     },
     // Student-specific fields
     major: {
       type: DataTypes.STRING,
-      allowNull: true, // Major can be null for professors
+      allowNull: true,
     },
     year: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Year can be null for professors
+      allowNull: true,
     },
     // Professor-specific fields
     office: {
       type: DataTypes.STRING,
-      allowNull: true, // Office can be null for students
+      allowNull: true,
     },
     courses: {
       type: DataTypes.TEXT,
-      allowNull: true, // Courses can be null for students
+      allowNull: true,
+    },
+    // New fields for Team relationship
+    teamId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Can be null if the student isn't part of a team yet
+      references: {
+        model: "Teams",
+        key: "id",
+      },
+    },
+    teamName: {
+      type: DataTypes.STRING,
+      allowNull: true, // Can be null if not part of a team yet
     },
   });
+
   User.associate = (models) => {
+    // A User belongs to a Team
+    User.belongsTo(models.Team, { foreignKey: "teamId", as: "team" });
+
     // Define relationship to Project
     User.hasMany(models.Project, {
       foreignKey: "userId",
       as: "projects",
     });
   };
+
   return User;
 };

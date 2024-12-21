@@ -8,7 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const deliverableRoutes = require("./routes/deliverableRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
-
+const teamRoutes = require("./routes/teamRoutes");
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +22,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/deliverables", deliverableRoutes);
 app.use("/api/grades", gradeRoutes);
+app.use("/api/teams", teamRoutes);
 
 // Handle 404 errors
 app.use((req, res) => {
