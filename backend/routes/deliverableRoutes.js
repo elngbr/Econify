@@ -1,48 +1,128 @@
-// routes/deliverableRoutes.js
 const express = require("express");
 const router = express.Router();
-const { Deliverable, Project, User } = require("../db/models");
+const { Deliverable, Project, Grade, User } = require("../db/models");
 
-// Create a new deliverable
-router.post("/", async (req, res) => {
+// 1. Create a new deliverable
+router.post("/", async (req, res, next) => {
   try {
-    const { title, dueDate, projectId } = req.body;
-
+    const { title, dueDate, submissionLink, projectId } = req.body;
+    
+    // Check if the project exists before creating the deliverable
     const project = await Project.findByPk(projectId);
     if (!project) {
-      return res.status(400).json({ error: "Invalid project ID" });
+      return res.status(400).json({ error: "Project not found" });
     }
 
-    const deliverable = await Deliverable.create({ title, dueDate, projectId });
+    const deliverable = await Deliverable.create({ title, dueDate, submissionLink, projectId });
     res.status(201).json(deliverable);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
-// Assign jury members to deliverable
-router.post("/:id/jury", async (req, res) => {
+// 2. Get all deliverables
+router.get("/", async (req, res, next) => {
   try {
-    const { juryIds } = req.body;
-    const deliverable = await Deliverable.findByPk(req.params.id);
-
-    if (!deliverable) {
-      return res.status(400).json({ error: "Invalid deliverable ID" });
-    }
-
-    for (const juryId of juryIds) {
-      const user = await User.findByPk(juryId);
-      if (!user || user.role !== "professor") {
-        return res.status(400).json({ error: `Invalid jury ID: ${juryId}` });
-      }
-      await deliverable.addJuryMember(user);
-    }
-
-    res.status(200).json({ message: "Jury members assigned successfully" });
+    const deliverables = await Deliverable.findAll({
+      include: [
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" },
+        { model: User, as: "juryMembers" }
+      ]
+    });
+    res.status(200).json(deliverables);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
+  }
+});
+
+// 3. Get a deliverable by ID
+router.get("/:id", async (req, res, next) => {
+  try {
+    const deliverable = await Deliverable.findByPk(req.params.id, {
+      include: [
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" },
+        { model: User, as: "juryMembers" }
+      ]
+    });
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+    res.status(200).json(deliverable);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 4. Update a deliverable
+router.put("/:id", async (req, res, next) => {
+  try {
+    const { title, dueDate, submissionLink, projectId } = req.body;
+
+    // Find the deliverable to update
+    const deliverable = await Deliverable.findByPk(req.params.id);
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+
+    // Update fields only if they are provided in the request
+    deliverable.title = title || deliverable.title;
+    deliverable.dueDate = dueDate || deliverable.dueDate;
+    deliverable.submissionLink = submissionLink || deliverable.submissionLink;
+    deliverable.projectId = projectId || deliverable.projectId;
+
+    await deliverable.save();
+    res.status(200).json(deliverable);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5. Delete a deliverable
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const deliverable = await Deliverable.findByPk(req.params.id);
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+    await deliverable.destroy();
+    res.status(200).json({ message: "Deliverable deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 6. Get deliverables by project ID
+router.get("/project/:projectId", async (req, res, next) => {
+  try {
+    const deliverables = await Deliverable.findAll({
+      where: { projectId: req.params.projectId },
+      include: [
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" },
+        { model: User, as: "juryMembers" }
+      ]
+    });
+    res.status(200).json(deliverables);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 7. Get deliverables by jury member (user)
+router.get("/jury/:userId", async (req, res, next) => {
+  try {
+    const deliverables = await Deliverable.findAll({
+      include: [
+        { model: User, as: "juryMembers", where: { id: req.params.userId } },
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" }
+      ]
+    });
+    res.status(200).json(deliverables);
+  } catch (err) {
+    next(err);
   }
 });
 
