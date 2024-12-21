@@ -6,16 +6,29 @@ const { Deliverable, Project, Grade, User } = require("../db/models");
 router.post("/", async (req, res, next) => {
   try {
     const { title, dueDate, submissionLink, projectId } = req.body;
-    
+
     // Check if the project exists before creating the deliverable
     const project = await Project.findByPk(projectId);
     if (!project) {
       return res.status(400).json({ error: "Project not found" });
     }
 
-    const deliverable = await Deliverable.create({ title, dueDate, submissionLink, projectId });
+    // Create the deliverable
+    const deliverable = await Deliverable.create({
+      title,
+      dueDate,
+      submissionLink,
+      projectId,
+    });
     res.status(201).json(deliverable);
   } catch (err) {
+    console.error("Error details:", err); // Log the error for debugging
+    if (
+      err.name === "SequelizeValidationError" ||
+      err.name === "SequelizeForeignKeyConstraintError"
+    ) {
+      return res.status(400).json({ error: err.message });
+    }
     next(err);
   }
 });
@@ -27,8 +40,8 @@ router.get("/", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {
@@ -43,8 +56,8 @@ router.get("/:id", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     if (!deliverable) {
       return res.status(404).json({ error: "Deliverable not found" });
@@ -101,8 +114,8 @@ router.get("/project/:projectId", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {
@@ -117,8 +130,8 @@ router.get("/jury/:userId", async (req, res, next) => {
       include: [
         { model: User, as: "juryMembers", where: { id: req.params.userId } },
         { model: Project, as: "project" },
-        { model: Grade, as: "grades" }
-      ]
+        { model: Grade, as: "grades" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {
