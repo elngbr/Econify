@@ -6,16 +6,29 @@ const { Deliverable, Project, Grade, User } = require("../db/models");
 router.post("/", async (req, res, next) => {
   try {
     const { title, dueDate, submissionLink, projectId } = req.body;
-    
+
     // Check if the project exists before creating the deliverable
     const project = await Project.findByPk(projectId);
     if (!project) {
       return res.status(400).json({ error: "Project not found" });
     }
 
-    const deliverable = await Deliverable.create({ title, dueDate, submissionLink, projectId });
+    // Create the deliverable
+    const deliverable = await Deliverable.create({
+      title,
+      dueDate,
+      submissionLink,
+      projectId,
+    });
     res.status(201).json(deliverable);
   } catch (err) {
+    console.error("Error details:", err);
+    if (
+      err.name === "SequelizeValidationError" ||
+      err.name === "SequelizeForeignKeyConstraintError"
+    ) {
+      return res.status(400).json({ error: err.message });
+    }
     next(err);
   }
 });
@@ -27,8 +40,8 @@ router.get("/", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {
@@ -43,8 +56,8 @@ router.get("/:id", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     if (!deliverable) {
       return res.status(404).json({ error: "Deliverable not found" });
@@ -60,13 +73,11 @@ router.put("/:id", async (req, res, next) => {
   try {
     const { title, dueDate, submissionLink, projectId } = req.body;
 
-    // Find the deliverable to update
     const deliverable = await Deliverable.findByPk(req.params.id);
     if (!deliverable) {
       return res.status(404).json({ error: "Deliverable not found" });
     }
 
-    // Update fields only if they are provided in the request
     deliverable.title = title || deliverable.title;
     deliverable.dueDate = dueDate || deliverable.dueDate;
     deliverable.submissionLink = submissionLink || deliverable.submissionLink;
@@ -101,8 +112,8 @@ router.get("/project/:projectId", async (req, res, next) => {
       include: [
         { model: Project, as: "project" },
         { model: Grade, as: "grades" },
-        { model: User, as: "juryMembers" }
-      ]
+        { model: User, as: "juryMembers" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {
@@ -117,8 +128,99 @@ router.get("/jury/:userId", async (req, res, next) => {
       include: [
         { model: User, as: "juryMembers", where: { id: req.params.userId } },
         { model: Project, as: "project" },
-        { model: Grade, as: "grades" }
-      ]
+        { model: Grade, as: "grades" },
+      ],
+    });
+    res.status(200).json(deliverables);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 8. Get grades for a specific deliverable
+router.get("/:id/grades", async (req, res, next) => {
+  try {
+    const grades = await Grade.findAll({
+      where: { deliverableId: req.params.id },
+      include: [{ model: User, as: "juryMember" }],
+    });
+    res.status(200).json(grades);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 9. Get jury members for a specific deliverable
+router.get("/:id/jury", async (req, res, next) => {
+  try {
+    const deliverable = await Deliverable.findByPk(req.params.id, {
+      include: [{ model: User, as: "juryMembers" }],
+    });
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+    res.status(200).json(deliverable.juryMembers);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 10. Get grades given by each juror for a deliverable
+router.get("/:id/grades-by-jury", async (req, res, next) => {
+  try {
+    const grades = await Grade.findAll({
+      where: { deliverableId: req.params.id },
+      include: [{ model: User, as: "juryMember" }],
+    });
+    res.status(200).json(grades);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 11. Get a specific deliverable of a project
+router.get("/project/:projectId/deliverable/:deliverableId", async (req, res, next) => {
+  try {
+    const deliverable = await Deliverable.findOne({
+      where: {
+        projectId: req.params.projectId,
+        id: req.params.deliverableId,
+      },
+      include: [
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" },
+        { model: User, as: "juryMembers" },
+      ],
+    });
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found" });
+    }
+    res.status(200).json(deliverable);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 12. Get deliverables filtered by due date (optional query parameter)
+router.get("/filter/by-date", async (req, res, next) => {
+  try {
+    const { before, after } = req.query;
+
+    const whereClause = {};
+    if (before) {
+      whereClause.dueDate = { ...(whereClause.dueDate || {}), $lte: new Date(before) };
+    }
+    if (after) {
+      whereClause.dueDate = { ...(whereClause.dueDate || {}), $gte: new Date(after) };
+    }
+
+    const deliverables = await Deliverable.findAll({
+      where: whereClause,
+      include: [
+        { model: Project, as: "project" },
+        { model: Grade, as: "grades" },
+        { model: User, as: "juryMembers" },
+      ],
     });
     res.status(200).json(deliverables);
   } catch (err) {

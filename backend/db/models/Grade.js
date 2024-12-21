@@ -1,4 +1,3 @@
-// db/models/Grade.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -16,18 +15,16 @@ module.exports = (sequelize) => {
         max: 10, // Grade must be <= 10
       },
       get() {
-        // Ensure that grade is returned with 2 decimal places
-        const value = this.getDataValue('grade');
+        const value = this.getDataValue("grade");
         return value !== null ? value.toFixed(2) : null;
       },
       set(value) {
-        // Ensure grade is stored with 2 decimal places and within range
         if (value >= 1 && value <= 10) {
-          this.setDataValue('grade', parseFloat(value).toFixed(2));
+          this.setDataValue("grade", parseFloat(value).toFixed(2));
         } else {
           throw new Error("Grade must be between 1 and 10");
         }
-      }
+      },
     },
     feedback: {
       type: DataTypes.TEXT, // Optional feedback for the deliverable
@@ -35,11 +32,16 @@ module.exports = (sequelize) => {
   });
 
   Grade.associate = (models) => {
-    // Grade belongs to a deliverable (a specific deliverable being graded)
     Grade.belongsTo(models.Deliverable, { foreignKey: "deliverableId", as: "deliverable" });
-
-    // Grade is submitted by a jury member (student)
     Grade.belongsTo(models.User, { foreignKey: "userId", as: "juryMember" }); // User is the student in the jury
+  };
+
+  // Helper method to calculate the average grade for a deliverable
+  Grade.getAverageGradeForDeliverable = async (deliverableId) => {
+    const grades = await Grade.findAll({ where: { deliverableId } });
+    if (grades.length === 0) return null;
+    const sum = grades.reduce((acc, grade) => acc + parseFloat(grade.grade), 0);
+    return (sum / grades.length).toFixed(2);
   };
 
   return Grade;
