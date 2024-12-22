@@ -1,0 +1,283 @@
+// db/models/User.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const User = sequelize.define("User", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isIn: [["student", "professor"]], // Only 'student' or 'professor' roles allowed
+      },
+    },
+    department: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    // Additional fields for professors
+    office: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    courses: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    // Additional fields for students
+    major: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    year: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+  });
+
+  User.associate = (models) => {
+    // Professors can create projects
+    User.hasMany(models.Project, {
+      foreignKey: "userId",
+      as: "projects",
+    });
+
+    // Students belong to a team
+    User.belongsTo(models.Team, {
+      foreignKey: "teamId",
+      as: "team",
+    });
+
+    // Students can act as jurors for deliverables
+    User.belongsToMany(models.Deliverable, {
+      through: "DeliverableJury",
+      as: "juryDeliverables",
+      foreignKey: "userId",
+    });
+  };
+
+  return User;
+};
+// db/models/Team.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Team = sequelize.define("Team", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  });
+
+  Team.associate = (models) => {
+    // A team works on a project
+    Team.belongsTo(models.Project, {
+      foreignKey: "projectId",
+      as: "project",
+    });
+
+    // A team can have multiple deliverables
+    Team.hasMany(models.Deliverable, {
+      foreignKey: "teamId",
+      as: "deliverables",
+    });
+
+    // A team has many students
+    Team.hasMany(models.User, {
+      foreignKey: "teamId",
+      as: "students",
+    });
+  };
+
+  return Team;
+};
+// db/models/Project.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Project = sequelize.define("Project", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+      allowNull: false, // Only professors can create projects
+    },
+  });
+
+  Project.associate = (models) => {
+    // A project belongs to a professor
+    Project.belongsTo(models.User, {
+      foreignKey: "userId",
+      as: "professor",
+    });
+
+    // A project has many teams
+    Project.hasMany(models.Team, {
+      foreignKey: "projectId",
+      as: "teams",
+    });
+
+    // A project has many deliverables (indirectly through teams)
+    Project.hasMany(models.Deliverable, {
+      foreignKey: "projectId",
+      as: "deliverables",
+    });
+  };
+
+  return Project;
+};
+// db/models/Grade.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Grade = sequelize.define("Grade", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    grade: {
+      type: DataTypes.FLOAT,
+      allowNull: true, // Grades can be null initially
+      validate: {
+        min: 1,
+        max: 10,
+      },
+    },
+    feedback: {
+      type: DataTypes.TEXT, // Optional feedback
+      allowNull: true,
+    },
+  });
+
+  Grade.associate = (models) => {
+    // A grade belongs to a deliverable
+    Grade.belongsTo(models.Deliverable, {
+      foreignKey: "deliverableId",
+      as: "deliverable",
+    });
+
+    // A grade is given by a jury member
+    Grade.belongsTo(models.User, {
+      foreignKey: "userId",
+      as: "juryMember",
+    });
+  };
+
+  return Grade;
+};
+// db/models/DeliverableJury.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const DeliverableJury = sequelize.define("DeliverableJury", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    assignedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW, // Record the assignment date
+    },
+  });
+
+  DeliverableJury.associate = (models) => {
+    // Relationship: Many-to-Many between Deliverable and User
+    DeliverableJury.belongsTo(models.Deliverable, {
+      foreignKey: "deliverableId",
+      as: "deliverable",
+    });
+
+    DeliverableJury.belongsTo(models.User, {
+      foreignKey: "userId",
+      as: "juryMember",
+    });
+  };
+
+  return DeliverableJury;
+};
+// db/models/Deliverable.js
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Deliverable = sequelize.define("Deliverable", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    dueDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    submissionLink: {
+      type: DataTypes.STRING, // Link to the submitted deliverable
+      allowNull: true,
+    },
+  });
+
+  Deliverable.associate = (models) => {
+    // A deliverable belongs to a team
+    Deliverable.belongsTo(models.Team, {
+      foreignKey: "teamId",
+      as: "team",
+    });
+
+    // A deliverable has many grades (from jury members)
+    Deliverable.hasMany(models.Grade, {
+      foreignKey: "deliverableId",
+      as: "grades",
+    });
+
+    // A deliverable has many jury members (students assigned to grade it)
+    Deliverable.belongsToMany(models.User, {
+      through: "DeliverableJury",
+      as: "juryMembers",
+      foreignKey: "deliverableId",
+    });
+  };
+
+  return Deliverable;
+};

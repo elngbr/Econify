@@ -19,17 +19,32 @@ module.exports = (sequelize) => {
     userId: {
       type: DataTypes.INTEGER,
       references: {
-        model: "Users", // This should reference the 'Users' table
-        key: "id", // The key in the 'Users' table
+        model: "Users",
+        key: "id",
       },
-      allowNull: false, // Ensure every project must be linked to a user
+      allowNull: false, // Only professors can create projects
     },
   });
 
-  // // Define the association with the User model
-  // Project.associate = (models) => {
-  //   Project.belongsTo(models.User, { foreignKey: "userId", as: "user" }); // A Project belongs to a User
-  // };
+  Project.associate = (models) => {
+    // A project belongs to a professor
+    Project.belongsTo(models.User, {
+      foreignKey: "userId",
+      as: "professor",
+    });
+
+    // A project has many teams
+    Project.hasMany(models.Team, {
+      foreignKey: "projectId",
+      as: "teams",
+    });
+
+    // A project has many deliverables (indirectly through teams)
+    Project.hasMany(models.Deliverable, {
+      foreignKey: "projectId",
+      as: "deliverables",
+    });
+  };
 
   return Project;
 };

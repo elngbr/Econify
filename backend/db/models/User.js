@@ -25,23 +25,14 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isIn: [["student", "professor"]], // Ensure role is either 'student' or 'professor'
+        isIn: [["student", "professor"]], // Only 'student' or 'professor' roles allowed
       },
     },
     department: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    // Student-specific fields
-    major: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    year: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    // Professor-specific fields
+    // Additional fields for professors
     office: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -50,29 +41,35 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    // New fields for Team relationship
-    teamId: {
-      type: DataTypes.INTEGER,
-      allowNull: true, // Can be null if the student isn't part of a team yet
-      references: {
-        model: "Teams",
-        key: "id",
-      },
-    },
-    teamName: {
+    // Additional fields for students
+    major: {
       type: DataTypes.STRING,
-      allowNull: true, // Can be null if not part of a team yet
+      allowNull: true,
+    },
+    year: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   });
 
   User.associate = (models) => {
-    // A User belongs to a Team
-    User.belongsTo(models.Team, { foreignKey: "teamId", as: "team" });
-
-    // Define relationship to Project
+    // Professors can create projects
     User.hasMany(models.Project, {
       foreignKey: "userId",
       as: "projects",
+    });
+
+    // Students belong to a team
+    User.belongsTo(models.Team, {
+      foreignKey: "teamId",
+      as: "team",
+    });
+
+    // Students can act as jurors for deliverables
+    User.belongsToMany(models.Deliverable, {
+      through: "DeliverableJury",
+      as: "juryDeliverables",
+      foreignKey: "userId",
     });
   };
 

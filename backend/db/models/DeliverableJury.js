@@ -1,39 +1,31 @@
+// db/models/DeliverableJury.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Deliverable = sequelize.define("Deliverable", {
+  const DeliverableJury = sequelize.define("DeliverableJury", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    dueDate: {
+    assignedAt: {
       type: DataTypes.DATE,
-      allowNull: false,
-    },
-    submissionLink: {
-      type: DataTypes.STRING, // Optional link to submitted deliverable
+      defaultValue: DataTypes.NOW, // Record the assignment date
     },
   });
 
-  Deliverable.associate = (models) => {
-    // A deliverable belongs to a project
-    Deliverable.belongsTo(models.Project, { foreignKey: "projectId", as: "project" });
-
-    // A deliverable has many grades (from the jury)
-    Deliverable.hasMany(models.Grade, { foreignKey: "deliverableId", as: "grades" });
-
-    // A deliverable has many jury members (students assigned to grade it)
-    Deliverable.belongsToMany(models.User, { 
-      through: "DeliverableJury", 
-      as: "juryMembers",
+  DeliverableJury.associate = (models) => {
+    // Relationship: Many-to-Many between Deliverable and User
+    DeliverableJury.belongsTo(models.Deliverable, {
       foreignKey: "deliverableId",
+      as: "deliverable",
+    });
+
+    DeliverableJury.belongsTo(models.User, {
+      foreignKey: "userId",
+      as: "juryMember",
     });
   };
 
-  return Deliverable;
+  return DeliverableJury;
 };
