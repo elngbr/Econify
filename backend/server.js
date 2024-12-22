@@ -8,7 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const deliverableRoutes = require("./routes/deliverableRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
-
+const teamRoutes = require("./routes/teamRoutes");
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +22,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/deliverables", deliverableRoutes);
 app.use("/api/grades", gradeRoutes);
+app.use("/api/teams", teamRoutes);
 
 // Handle 404 errors
 app.use((req, res) => {
@@ -43,7 +44,7 @@ app.use((err, req, res, next) => {
     console.log("Database connected!");
 
     // Sync database
-    await sequelize.sync({ force: false }); // Set to `true` to recreate tables on every run
+    await sequelize.sync({ force: true }); // Set to `true` to recreate tables on every run
     console.log("Database synced!");
 
     // Start the server

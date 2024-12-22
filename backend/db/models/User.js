@@ -25,39 +25,53 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isIn: [["student", "professor"]], // Ensure role is either 'student' or 'professor'
+        isIn: [["student", "professor"]], // Only 'student' or 'professor' roles allowed
       },
     },
-    // Common fields (applicable for both student and professor)
     department: {
       type: DataTypes.STRING,
-      allowNull: true, // Can be null for students if not applicable
+      allowNull: true,
     },
-    // Student-specific fields
-    major: {
-      type: DataTypes.STRING,
-      allowNull: true, // Major can be null for professors
-    },
-    year: {
-      type: DataTypes.INTEGER,
-      allowNull: true, // Year can be null for professors
-    },
-    // Professor-specific fields
+    // Additional fields for professors
     office: {
       type: DataTypes.STRING,
-      allowNull: true, // Office can be null for students
+      allowNull: true,
     },
     courses: {
       type: DataTypes.TEXT,
-      allowNull: true, // Courses can be null for students
+      allowNull: true,
+    },
+    // Additional fields for students
+    major: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    year: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   });
+
   User.associate = (models) => {
-    // Define relationship to Project
+    // Professors can create projects
     User.hasMany(models.Project, {
       foreignKey: "userId",
       as: "projects",
     });
+
+    // Students belong to a team
+    User.belongsTo(models.Team, {
+      foreignKey: "teamId",
+      as: "team",
+    });
+
+    // Students can act as jurors for deliverables
+    User.belongsToMany(models.Deliverable, {
+      through: "DeliverableJury",
+      as: "juryDeliverables",
+      foreignKey: "userId",
+    });
   };
+
   return User;
 };

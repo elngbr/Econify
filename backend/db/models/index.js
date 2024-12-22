@@ -15,6 +15,7 @@ models.Project = require("./Project")(sequelize, Sequelize);
 models.Deliverable = require("./Deliverable")(sequelize, Sequelize);
 models.Grade = require("./Grade")(sequelize, Sequelize);
 models.DeliverableJury = require("./DeliverableJury")(sequelize, Sequelize);
+models.Team = require("./Team")(sequelize, Sequelize);
 
 // Define associations (if any)
 Object.values(models).forEach((model) => {
