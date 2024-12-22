@@ -1,18 +1,29 @@
 const express = require("express");
-const { registerUser, loginUser, getProfile, updateUser } = require("../controllers/userController");
+const {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateUser,
+  getAllUsers,
+  getStudentsByProject,
+  getUsersByTeam,
+  deleteUser,
+  changePassword,
+  getUsersByRole,
+} = require("../controllers/userController");
 const { verifyToken, isProfessor, isStudent } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
 // Public Routes
-router.post("/register", registerUser); // Register as student or professor
-router.post("/login", loginUser); // Login and get a token
+router.post("/register", registerUser);
+router.post("/login", loginUser);
 
 // Protected Routes
-router.get("/profile", verifyToken, getProfile); // Get user profile
-router.put("/profile", verifyToken, updateUser); // Update user details
+router.get("/profile", verifyToken, getProfile);
+router.put("/profile", verifyToken, updateUser);
 
-// Example of role-specific endpoints
+// Role-specific Routes
 router.get("/professor-dashboard", verifyToken, isProfessor, (req, res) => {
   res.json({ message: "Welcome, Professor!" });
 });

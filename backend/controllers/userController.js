@@ -78,6 +78,90 @@ const updateUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Server error." });
   }
+  
+};
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching users." });
+  }
+};
+const getStudentsByProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const students = await User.findAll({
+      where: { role: "student" }, // Adjust based on your `role` field values
+      include: {
+        model: Team,
+        where: { projectId },
+      },
+    });
+
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching students for the project." });
+  }
+};
+const getUsersByTeam = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const users = await User.findAll({
+      where: { teamId },
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching users for the team." });
+  }
+};
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    await user.destroy();
+    res.json({ message: "User deleted successfully." });
+  } catch (error) {
+    res.status(500).json({ error: "Error deleting user." });
+  }
+};
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = req.user; // Populated by middleware
+
+    // Validate old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(401).json({ error: "Invalid old password." });
+
+    // Update password
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating password." });
+  }
+};
+const getUsersByRole = async (req, res) => {
+  try {
+    const { role } = req.params;
+
+    const users = await User.findAll({
+      where: { role },
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching users by role." });
+  }
 };
 
-module.exports = { registerUser, loginUser, getProfile, updateUser };
+
+module.exports = { registerUser, loginUser, getProfile, updateUser,getAllUsers,getStudentsByProject,getUsersByTeam ,deleteUser,changePassword,getUsersByRole};

@@ -41,6 +41,7 @@ module.exports = (sequelize) => {
       as: "juryMembers",
       foreignKey: "deliverableId",
     });
+    // Deliverable.belongsTo(models.Project, { foreignKey: "projectId", as: "project" });
   };
 
   return Deliverable;

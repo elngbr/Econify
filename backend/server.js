@@ -44,7 +44,7 @@ app.use((err, req, res, next) => {
     console.log("Database connected!");
 
     // Sync database
-    await sequelize.sync({ force: true }); // Set to `true` to recreate tables on every run
+    await sequelize.sync({ force: false }); // Set to `true` to recreate tables on every run
     console.log("Database synced!");
 
     // Start the server

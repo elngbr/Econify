@@ -1,4 +1,4 @@
-const { Project } = require("../db/models");
+const { Project, User } = require("../db/models");
 
 const createProject = async (req, res) => {
   try {
@@ -17,5 +17,19 @@ const createProject = async (req, res) => {
     res.status(500).json({ error: "Server error while creating project." });
   }
 };
+const getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.findAll({
+      include: [
+        { model: User, as: "professor", attributes: ["name", "email"] },
+      ], // Include professor details
+    });
 
-module.exports = { createProject };
+    res.json({ projects });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error while fetching projects." });
+  }
+};
+
+module.exports = { createProject, getAllProjects };
