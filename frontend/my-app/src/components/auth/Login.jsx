@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const Login = () => {
-  const { login } = useContext(AuthContext); // Access the login function from AuthContext
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -14,12 +14,13 @@ const Login = () => {
 
     try {
       const response = await api.post("/users/login", { email, password });
-      console.log("Login response:", response.data); // Debug user data
+      console.log("Login response:", response.data);
       const userData = response.data;
 
       login(userData); // Store user data in context
       console.log("Redirecting to dashboard...");
       console.log("User role:", userData.role);
+
       navigate(
         userData.role === "professor"
           ? "/professor-dashboard"
