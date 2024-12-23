@@ -1,16 +1,24 @@
-const express = require('express');
-const router = express.Router();
+const express = require("express");
+const { verifyToken, isStudent, isProfessor } = require("../middlewares/authMiddleware");
 const {
-    getDeliverablesByTeam,
-    getDeliverablesByProject,
-    getDeliverablesForUser,
-    getDeliverablesDueSoon,
-} = require('../controllers/deliverableController');
+  createDeliverable,
+  getDeliverablesByTeam,
+  assignJuryToDeliverable,
+  submitGrade,
+  getDeliverableGrades,
+  getTeamMembersByDeliverable,releaseDeliverableGrades
+} = require("../controllers/deliverableController");
+
+const router = express.Router();
 
 // Deliverable routes
-router.get('/deliverables/team/:teamId', getDeliverablesByTeam);
-router.get('/deliverables/project/:projectId', getDeliverablesByProject);
-router.get('/deliverables/user/:userId', getDeliverablesForUser);
-router.get('/deliverables/due-soon', getDeliverablesDueSoon);
+router.post("/create", verifyToken, isStudent, createDeliverable);
+router.get("/team/:teamId", verifyToken, getDeliverablesByTeam);
+router.post("/assign-jury", verifyToken, isProfessor, assignJuryToDeliverable);
+router.post("/grade", verifyToken, isStudent, submitGrade);
+router.get("/:deliverableId/grades", verifyToken, getDeliverableGrades);
+router.get("/:deliverableId/team-members", verifyToken, getTeamMembersByDeliverable);
+router.put("/:deliverableId/release", verifyToken, isProfessor, releaseDeliverableGrades);
+
 
 module.exports = router;
