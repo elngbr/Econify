@@ -1,4 +1,3 @@
-// db/models/Deliverable.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -12,36 +11,32 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     dueDate: {
       type: DataTypes.DATE,
       allowNull: false,
     },
     submissionLink: {
-      type: DataTypes.STRING, // Link to the submitted deliverable
+      type: DataTypes.STRING,
       allowNull: true,
+    },
+    released: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Grades are not released by default
     },
   });
 
   Deliverable.associate = (models) => {
-    // A deliverable belongs to a team
-    Deliverable.belongsTo(models.Team, {
-      foreignKey: "teamId",
-      as: "team",
-    });
-
-    // A deliverable has many grades (from jury members)
-    Deliverable.hasMany(models.Grade, {
-      foreignKey: "deliverableId",
-      as: "grades",
-    });
-
-    // A deliverable has many jury members (students assigned to grade it)
+    Deliverable.belongsTo(models.Team, { foreignKey: "teamId", as: "team" });
+    Deliverable.hasMany(models.Grade, { foreignKey: "deliverableId", as: "grades" });
     Deliverable.belongsToMany(models.User, {
       through: "DeliverableJury",
       as: "juryMembers",
       foreignKey: "deliverableId",
     });
-    // Deliverable.belongsTo(models.Project, { foreignKey: "projectId", as: "project" });
   };
 
   return Deliverable;
