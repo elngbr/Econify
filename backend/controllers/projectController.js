@@ -31,5 +31,31 @@ const getAllProjects = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching projects." });
   }
 };
+const editProject = async (req, res) => {
+  try {
+    const { id } = req.params; // Get project ID from URL
+    const { title, description } = req.body; // Get updated fields
 
-module.exports = { createProject, getAllProjects };
+    // Find the project to edit
+    const project = await Project.findOne({
+      where: { id, userId: req.user.id }, // Ensure it belongs to the logged-in professor
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found or not owned by you." });
+    }
+
+    // Update the project fields
+    project.title = title || project.title;
+    project.description = description || project.description;
+    await project.save();
+
+    res.status(200).json({ message: "Project updated successfully.", project });
+  } catch (error) {
+    console.error("Error updating project:", error);
+    res.status(500).json({ error: "Server error while updating project." });
+  }
+};
+
+module.exports = { createProject, getAllProjects, editProject };
+

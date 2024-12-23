@@ -5,18 +5,27 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+
+// Import Auth Components
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
-import ProfessorDashboard from "./components/dashboard/ProfessorDashboard";
-import StudentDashboard from "./components/dashboard/StudentDashboard"; // Import StudentDashboard
 import PrivateRoute from "./components/auth/PrivateRoute";
+
+// Import Dashboard Components
+import ProfessorDashboard from "./components/dashboard/ProfessorDashboard";
+import StudentDashboard from "./components/dashboard/StudentDashboard";
+import CreateProject from "./components/dashboard/CreateProject";
+import EditProject from "./components/dashboard/EditProject";
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Authentication Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Professor Routes */}
         <Route
           path="/professor-dashboard"
           element={
@@ -26,6 +35,24 @@ const App = () => {
           }
         />
         <Route
+          path="/create-project"
+          element={
+            <PrivateRoute role="professor">
+              <CreateProject />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/projects/:id/edit"
+          element={
+            <PrivateRoute role="professor">
+              <EditProject />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Student Routes */}
+        <Route
           path="/student-dashboard"
           element={
             <PrivateRoute role="student">
@@ -33,6 +60,8 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+        {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

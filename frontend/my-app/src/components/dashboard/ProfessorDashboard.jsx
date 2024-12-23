@@ -10,10 +10,14 @@ const ProfessorDashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        console.log("Fetching professor projects...");
-        const response = await api.get("/users/professor-dashboard");
-        console.log("Projects fetched:", response.data.projects);
-        setProjects(response.data.projects || []);
+        const response = await api.get("/users/professor-dashboard"); // Fetching from backend
+        const { projects } = response.data;
+
+        if (projects && projects.length > 0) {
+          setProjects(projects);
+        } else {
+          console.error("No projects found in response data.");
+        }
       } catch (error) {
         console.error(
           "Error fetching projects:",
@@ -28,12 +32,18 @@ const ProfessorDashboard = () => {
   }, []);
 
   const viewProjectDetails = (projectId) => {
-    navigate(`/projects/${projectId}`);
+    navigate(`/projects/${projectId}/edit`);
   };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Professor Dashboard</h1>
+      <button
+        style={styles.createButton}
+        onClick={() => navigate("/create-project")}
+      >
+        Create New Project
+      </button>
       {loading ? (
         <p style={styles.loading}>Loading projects...</p>
       ) : (
@@ -43,13 +53,20 @@ const ProfessorDashboard = () => {
           ) : (
             projects.map((project) => (
               <div key={project.id} style={styles.projectCard}>
-                <h2 style={styles.projectTitle}>{project.title}</h2>
-                <p style={styles.projectDescription}>{project.description}</p>
+                {/* Project Title */}
+                <h2 style={styles.projectTitle}>
+                  {project.title || "Untitled Project"}
+                </h2>
+                {/* Project Description */}
+                <p style={styles.projectDescription}>
+                  {project.description || "No description provided."}
+                </p>
+                {/* Button to View / Edit Project */}
                 <button
                   style={styles.detailsButton}
                   onClick={() => viewProjectDetails(project.id)}
                 >
-                  View Details
+                  View / Edit Project
                 </button>
               </div>
             ))
@@ -63,13 +80,25 @@ const ProfessorDashboard = () => {
 const styles = {
   container: {
     padding: "20px",
-    backgroundColor: "#f3f2fc", // Light purple
+    backgroundColor: "#f3f2fc",
     minHeight: "100vh",
   },
   heading: {
     textAlign: "center",
-    color: "#4a148c", // Dark purple
+    color: "#4a148c",
     marginBottom: "20px",
+  },
+  createButton: {
+    display: "block",
+    margin: "20px auto",
+    padding: "10px 20px",
+    backgroundColor: "#4a148c",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "bold",
   },
   loading: {
     textAlign: "center",
@@ -86,8 +115,8 @@ const styles = {
     color: "#4a148c",
   },
   projectCard: {
-    backgroundColor: "#fff", // White
-    border: "1px solid #d1c4e9", // Light border
+    backgroundColor: "#fff",
+    border: "1px solid #d1c4e9",
     borderRadius: "10px",
     padding: "20px",
     width: "300px",
@@ -95,16 +124,18 @@ const styles = {
     textAlign: "center",
   },
   projectTitle: {
-    color: "#4a148c", // Dark purple
+    color: "#4a148c",
+    fontSize: "20px",
+    fontWeight: "bold",
     marginBottom: "10px",
   },
   projectDescription: {
-    color: "#616161", // Gray
-    marginBottom: "15px",
+    color: "#616161",
+    marginBottom: "10px",
   },
   detailsButton: {
-    backgroundColor: "#4a148c", // Dark purple
-    color: "#fff", // White
+    backgroundColor: "#4a148c",
+    color: "#fff",
     border: "none",
     padding: "10px 15px",
     borderRadius: "5px",

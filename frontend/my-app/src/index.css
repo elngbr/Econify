@@ -23,6 +23,7 @@ body {
 .field {
   display: flex;
   flex-direction: column;
+  text-align: left; /* Aligns labels properly */
 }
 
 .field label {
@@ -36,6 +37,8 @@ body {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box; /* Ensures proper box-sizing */
+  width: 100%; /* Ensures the input spans the entire container width */
 }
 
 .submit-button {
@@ -47,6 +50,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  width: 100%; /* Ensures the button spans the container */
 }
 
 .submit-button:hover {
