@@ -4,7 +4,8 @@ const {
   loginUser,
   getProfile,
 } = require("../controllers/userController");
-const { getProfessorDashboard } = require("../controllers/professorController"); // Import the professor dashboard controller
+const { getProfessorDashboard } = require("../controllers/professorController");
+const { getStudentDashboard } = require("../controllers/studentController"); // Import the student dashboard controller
 const { verifyToken, isProfessor, isStudent } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
@@ -17,11 +18,7 @@ router.post("/login", loginUser);
 router.get("/profile", verifyToken, getProfile);
 
 // Role-Specific Routes
-router.get("/student-dashboard", verifyToken, isStudent, async (req, res) => {
-  res.json({ message: "Welcome, Student!" });
-});
-
-// Updated route for Professor Dashboard
-router.get("/professor-dashboard", verifyToken, isProfessor, getProfessorDashboard); // Use the controller here
+router.get("/student-dashboard", verifyToken, isStudent, getStudentDashboard); // Updated for student dashboard
+router.get("/professor-dashboard", verifyToken, isProfessor, getProfessorDashboard);
 
 module.exports = router;

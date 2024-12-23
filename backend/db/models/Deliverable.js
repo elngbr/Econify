@@ -13,14 +13,14 @@ module.exports = (sequelize) => {
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true, // Optional description of the deliverable
+      allowNull: true,
     },
     dueDate: {
       type: DataTypes.DATE,
       allowNull: false,
     },
     submissionLink: {
-      type: DataTypes.STRING, // Optional submission link
+      type: DataTypes.STRING,
       allowNull: true,
     },
     released: {
