@@ -1,20 +1,34 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Access the login function from AuthContext
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Simulate login
-    const userData = { email, role: "student" };
-    login(userData);
-    navigate("/");
+    try {
+      const response = await api.post("/users/login", { email, password });
+      console.log("Login response:", response.data); // Debug user data
+      const userData = response.data;
+
+      login(userData); // Store user data in context
+      console.log("Redirecting to dashboard...");
+      console.log("User role:", userData.role);
+      navigate(
+        userData.role === "professor"
+          ? "/professor-dashboard"
+          : "/student-dashboard"
+      );
+    } catch (error) {
+      console.error("Login failed:", error.response?.data || error.message);
+      alert("Login failed. Please check your credentials.");
+    }
   };
 
   return (

@@ -7,20 +7,19 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
-    role: "student",
+    role: "student", // Default role
   });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await api.post("/users/register", formData);
-      navigate("/login");
+      navigate("/login"); // Redirect to login after registration
     } catch (error) {
       console.error("Registration error:", error);
     }
@@ -35,10 +34,10 @@ const Register = () => {
           <input
             type="text"
             name="name"
+            placeholder="Enter your name"
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="Enter your name"
           />
         </div>
         <div className="field">
@@ -46,10 +45,10 @@ const Register = () => {
           <input
             type="email"
             name="email"
+            placeholder="Enter your email"
             value={formData.email}
             onChange={handleChange}
             required
-            placeholder="Enter your email"
           />
         </div>
         <div className="field">
@@ -57,20 +56,15 @@ const Register = () => {
           <input
             type="password"
             name="password"
+            placeholder="Enter your password"
             value={formData.password}
             onChange={handleChange}
             required
-            placeholder="Enter your password"
           />
         </div>
         <div className="field">
           <label>Role</label>
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
+          <select name="role" value={formData.role} onChange={handleChange} required>
             <option value="student">Student</option>
             <option value="professor">Professor</option>
           </select>
