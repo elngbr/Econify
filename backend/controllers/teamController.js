@@ -69,22 +69,6 @@ const getTeamsByProject = async (req, res) => {
 };
 
 
-// Controller to remove a user from a team
-const removeUserFromTeam = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const user = await User.findByPk(userId);
-    if (!user || !user.teamId) {
-      return res.status(404).json({ error: "User not in a team." });
-    }
-    user.teamId = null;
-    await user.save();
-    res.json({ message: "User removed from team." });
-  } catch (error) {
-    console.error("Error removing user:", error.message);
-    res.status(500).json({ error: "Server error while removing user." });
-  }
-};
 
 // Controller to delete a team
 const deleteTeam = async (req, res) => {
@@ -99,6 +83,53 @@ const deleteTeam = async (req, res) => {
     res.status(500).json({ error: "Server error while deleting team." });
   }
 };
+// Controller to get all members of a team
+const getTeamMembers = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const team = await Team.findByPk(teamId, {
+      include: [
+        {
+          model: User,
+          as: "students",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+    });
+
+    if (!team) {
+      return res.status(404).json({ error: "Team not found." });
+    }
+
+    res.status(200).json({ members: team.students });
+  } catch (error) {
+    console.error("Error fetching team members:", error.message);
+    res
+      .status(500)
+      .json({ error: "Server error while fetching team members." });
+  }
+};
+
+// Controller to remove a member from a team
+const removeUserFromTeam = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const user = await User.findByPk(userId);
+    if (!user || !user.teamId) {
+      return res
+        .status(404)
+        .json({ error: "User not found or not in a team." });
+    }
+    user.teamId = null; // Remove user from the team
+    await user.save();
+    res.json({ message: "User removed from the team successfully." });
+  } catch (error) {
+    console.error("Error removing user from team:", error.message);
+    res
+      .status(500)
+      .json({ error: "Server error while removing user from team." });
+  }
+};
 
 module.exports = {
   createTeam,
@@ -106,4 +137,6 @@ module.exports = {
   getTeamsByProject,
   removeUserFromTeam,
   deleteTeam,
+  getTeamMembers,
+  removeUserFromTeam,
 };
