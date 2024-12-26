@@ -57,5 +57,29 @@ const editProject = async (req, res) => {
   }
 };
 
-module.exports = { createProject, getAllProjects, editProject };
+const getProjectById = async (req, res) => {
+  try {
+    const { id } = req.params; // Get project ID from URL
+
+    // Find the project with the given ID, including the professor details
+    const project = await Project.findOne({
+      where: { id },
+      include: [
+        { model: User, as: "professor", attributes: ["name", "email"] }, // Include professor details
+      ],
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found." });
+    }
+
+    res.status(200).json({ project });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    res.status(500).json({ error: "Server error while fetching project." });
+  }
+};
+
+module.exports = { createProject, getAllProjects, editProject, getProjectById };
+
 

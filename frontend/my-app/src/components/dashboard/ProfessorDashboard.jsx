@@ -10,60 +10,62 @@ const ProfessorDashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        console.log("Fetching professor projects...");
         const response = await api.get("/users/professor-dashboard");
-        console.log("Projects fetched:", response.data.projects);
         setProjects(response.data.projects || []);
       } catch (error) {
-        console.error(
-          "Error fetching projects:",
-          error.response?.data || error.message
-        );
+        console.error("Error fetching projects:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProjects();
   }, []);
 
-  const viewProjectDetails = (projectId) => {
+  const handleViewTeams = (projectId) => {
+    navigate(`/projects/${projectId}/teams`);
+  };
+
+  const handleEditProject = (projectId) => {
     navigate(`/projects/${projectId}/edit`);
   };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Professor Dashboard</h1>
-      <button
-        style={styles.createButton}
-        onClick={() => navigate("/create-project")}
-      >
-        Create New Project
-      </button>
+      <div style={styles.buttonContainer}>
+        <button
+          style={styles.createButton}
+          onClick={() => navigate("/create-project")}
+        >
+          Create Project
+        </button>
+      </div>
       {loading ? (
-        <p style={styles.loading}>Loading projects...</p>
+        <p style={styles.loading}>Loading...</p>
       ) : (
         <div style={styles.projectList}>
-          {projects.length === 0 ? (
-            <p style={styles.noProjects}>No projects found.</p>
-          ) : (
-            projects.map((project) => (
-              <div key={project.id} style={styles.projectCard}>
-                <h2 style={styles.projectTitle}>
-                  {project.title || "Untitled Project"}
-                </h2>
-                <p style={styles.projectDescription}>
-                  {project.description || "No description provided."}
-                </p>
+          {projects.map((project) => (
+            <div key={project.projectId} style={styles.projectCard}>
+              <h2 style={styles.projectTitle}>{project.projectTitle}</h2>
+              <p style={styles.projectDescription}>
+                {project.projectDescription}
+              </p>
+              <div style={styles.buttonGroup}>
                 <button
-                  style={styles.detailsButton}
-                  onClick={() => viewProjectDetails(project.id)}
+                  style={styles.cardButton}
+                  onClick={() => handleEditProject(project.projectId)}
                 >
-                  View / Edit Project
+                  Edit
+                </button>
+                <button
+                  style={styles.cardButton}
+                  onClick={() => handleViewTeams(project.projectId)}
+                >
+                  View Teams
                 </button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -81,9 +83,12 @@ const styles = {
     color: "#4a148c",
     marginBottom: "20px",
   },
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "20px",
+  },
   createButton: {
-    display: "block",
-    margin: "20px auto",
     padding: "10px 20px",
     backgroundColor: "#4a148c",
     color: "#fff",
@@ -102,10 +107,6 @@ const styles = {
     flexWrap: "wrap",
     gap: "20px",
     justifyContent: "center",
-  },
-  noProjects: {
-    textAlign: "center",
-    color: "#4a148c",
   },
   projectCard: {
     backgroundColor: "#fff",
@@ -126,7 +127,12 @@ const styles = {
     color: "#616161",
     marginBottom: "10px",
   },
-  detailsButton: {
+  buttonGroup: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "10px",
+  },
+  cardButton: {
     backgroundColor: "#4a148c",
     color: "#fff",
     border: "none",

@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import { AuthContext } from "../../context/AuthContext"; // Correctly import AuthContext
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Use AuthContext here
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -17,10 +17,7 @@ const Login = () => {
       console.log("Login response:", response.data);
       const userData = response.data;
 
-      login(userData); // Store user data in context
-      console.log("Redirecting to dashboard...");
-      console.log("User role:", userData.role);
-
+      login(userData); // Call login function from context
       navigate(
         userData.role === "professor"
           ? "/professor-dashboard"
