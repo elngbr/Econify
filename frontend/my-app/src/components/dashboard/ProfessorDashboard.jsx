@@ -10,14 +10,10 @@ const ProfessorDashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await api.get("/users/professor-dashboard"); // Fetching from backend
-        const { projects } = response.data;
-
-        if (projects && projects.length > 0) {
-          setProjects(projects);
-        } else {
-          console.error("No projects found in response data.");
-        }
+        console.log("Fetching professor projects...");
+        const response = await api.get("/users/professor-dashboard");
+        console.log("Projects fetched:", response.data.projects);
+        setProjects(response.data.projects || []);
       } catch (error) {
         console.error(
           "Error fetching projects:",
@@ -53,15 +49,12 @@ const ProfessorDashboard = () => {
           ) : (
             projects.map((project) => (
               <div key={project.id} style={styles.projectCard}>
-                {/* Project Title */}
                 <h2 style={styles.projectTitle}>
                   {project.title || "Untitled Project"}
                 </h2>
-                {/* Project Description */}
                 <p style={styles.projectDescription}>
                   {project.description || "No description provided."}
                 </p>
-                {/* Button to View / Edit Project */}
                 <button
                   style={styles.detailsButton}
                   onClick={() => viewProjectDetails(project.id)}
