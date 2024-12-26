@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useNavigate } from "react-router-dom";
 
 const ProfessorDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -10,13 +10,12 @@ const ProfessorDashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        console.log("Fetching professor projects...");
         const response = await api.get("/users/professor-dashboard");
-        console.log("Projects fetched:", response.data.projects);
+        console.log("Projects fetched:", response.data);
         setProjects(response.data.projects || []);
       } catch (error) {
         console.error(
-          "Error fetching projects:",
+          "Error fetching professor dashboard:",
           error.response?.data || error.message
         );
       } finally {
@@ -27,40 +26,54 @@ const ProfessorDashboard = () => {
     fetchProjects();
   }, []);
 
-  const viewProjectDetails = (projectId) => {
+  const handleEditProject = (projectId) => {
     navigate(`/projects/${projectId}/edit`);
+  };
+
+  const handleViewTeams = (projectId) => {
+    navigate(`/projects/${projectId}/teams`);
   };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Professor Dashboard</h1>
-      <button
-        style={styles.createButton}
-        onClick={() => navigate("/create-project")}
-      >
-        Create New Project
-      </button>
+      <div style={styles.buttonContainer}>
+        <button
+          style={styles.createButton}
+          onClick={() => navigate("/create-project")}
+        >
+          Create New Project
+        </button>
+      </div>
       {loading ? (
         <p style={styles.loading}>Loading projects...</p>
       ) : (
         <div style={styles.projectList}>
           {projects.length === 0 ? (
-            <p style={styles.noProjects}>No projects found.</p>
+            <p style={styles.noProjects}>No projects available.</p>
           ) : (
             projects.map((project) => (
-              <div key={project.id} style={styles.projectCard}>
-                <h2 style={styles.projectTitle}>
-                  {project.title || "Untitled Project"}
-                </h2>
+              <div key={project.projectId} style={styles.projectCard}>
+                <h3 style={styles.projectTitle}>
+                  {project.projectTitle || "Untitled Project"}
+                </h3>
                 <p style={styles.projectDescription}>
-                  {project.description || "No description provided."}
+                  {project.projectDescription || "No description provided."}
                 </p>
-                <button
-                  style={styles.detailsButton}
-                  onClick={() => viewProjectDetails(project.id)}
-                >
-                  View / Edit Project
-                </button>
+                <div style={styles.buttonGroup}>
+                  <button
+                    style={styles.cardButton}
+                    onClick={() => handleEditProject(project.projectId)}
+                  >
+                    Edit Project
+                  </button>
+                  <button
+                    style={styles.cardButton}
+                    onClick={() => handleViewTeams(project.projectId)}
+                  >
+                    View Teams
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -81,9 +94,12 @@ const styles = {
     color: "#4a148c",
     marginBottom: "20px",
   },
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "20px",
+  },
   createButton: {
-    display: "block",
-    margin: "20px auto",
     padding: "10px 20px",
     backgroundColor: "#4a148c",
     color: "#fff",
@@ -126,7 +142,12 @@ const styles = {
     color: "#616161",
     marginBottom: "10px",
   },
-  detailsButton: {
+  buttonGroup: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "10px",
+  },
+  cardButton: {
     backgroundColor: "#4a148c",
     color: "#fff",
     border: "none",

@@ -16,6 +16,7 @@ import ProfessorDashboard from "./components/dashboard/ProfessorDashboard";
 import StudentDashboard from "./components/dashboard/StudentDashboard";
 import CreateProject from "./components/dashboard/CreateProject";
 import EditProject from "./components/dashboard/EditProject";
+import ViewTeams from "./components/dashboard/ViewTeams"; // New Component
 
 const App = () => {
   return (
@@ -47,6 +48,14 @@ const App = () => {
           element={
             <PrivateRoute role="professor">
               <EditProject />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/projects/:id/teams"
+          element={
+            <PrivateRoute role="professor">
+              <ViewTeams />
             </PrivateRoute>
           }
         />
