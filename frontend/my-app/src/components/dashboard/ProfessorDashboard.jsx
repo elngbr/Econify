@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 const ProfessorDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -11,27 +11,22 @@ const ProfessorDashboard = () => {
     const fetchProjects = async () => {
       try {
         const response = await api.get("/users/professor-dashboard");
-        console.log("Projects fetched:", response.data);
         setProjects(response.data.projects || []);
       } catch (error) {
-        console.error(
-          "Error fetching professor dashboard:",
-          error.response?.data || error.message
-        );
+        console.error("Error fetching projects:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProjects();
   }, []);
 
-  const handleEditProject = (projectId) => {
-    navigate(`/projects/${projectId}/edit`);
-  };
-
   const handleViewTeams = (projectId) => {
     navigate(`/projects/${projectId}/teams`);
+  };
+
+  const handleEditProject = (projectId) => {
+    navigate(`/projects/${projectId}/edit`);
   };
 
   return (
@@ -42,41 +37,35 @@ const ProfessorDashboard = () => {
           style={styles.createButton}
           onClick={() => navigate("/create-project")}
         >
-          Create New Project
+          Create Project
         </button>
       </div>
       {loading ? (
-        <p style={styles.loading}>Loading projects...</p>
+        <p style={styles.loading}>Loading...</p>
       ) : (
         <div style={styles.projectList}>
-          {projects.length === 0 ? (
-            <p style={styles.noProjects}>No projects available.</p>
-          ) : (
-            projects.map((project) => (
-              <div key={project.projectId} style={styles.projectCard}>
-                <h3 style={styles.projectTitle}>
-                  {project.projectTitle || "Untitled Project"}
-                </h3>
-                <p style={styles.projectDescription}>
-                  {project.projectDescription || "No description provided."}
-                </p>
-                <div style={styles.buttonGroup}>
-                  <button
-                    style={styles.cardButton}
-                    onClick={() => handleEditProject(project.projectId)}
-                  >
-                    Edit Project
-                  </button>
-                  <button
-                    style={styles.cardButton}
-                    onClick={() => handleViewTeams(project.projectId)}
-                  >
-                    View Teams
-                  </button>
-                </div>
+          {projects.map((project) => (
+            <div key={project.projectId} style={styles.projectCard}>
+              <h2 style={styles.projectTitle}>{project.projectTitle}</h2>
+              <p style={styles.projectDescription}>
+                {project.projectDescription}
+              </p>
+              <div style={styles.buttonGroup}>
+                <button
+                  style={styles.cardButton}
+                  onClick={() => handleEditProject(project.projectId)}
+                >
+                  Edit
+                </button>
+                <button
+                  style={styles.cardButton}
+                  onClick={() => handleViewTeams(project.projectId)}
+                >
+                  View Teams
+                </button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -118,10 +107,6 @@ const styles = {
     flexWrap: "wrap",
     gap: "20px",
     justifyContent: "center",
-  },
-  noProjects: {
-    textAlign: "center",
-    color: "#4a148c",
   },
   projectCard: {
     backgroundColor: "#fff",

@@ -11,9 +11,24 @@ const EditProject = () => {
     const fetchProject = async () => {
       try {
         const response = await api.get(`/projects/${id}`); // Fetch project details
-        setProject(response.data.project);
+        console.log("Fetched project:", response.data);
+
+        // Check response structure and set the project state
+        if (response.data && response.data.project) {
+          setProject({
+            title: response.data.project.title || "",
+            description: response.data.project.description || "",
+          });
+        } else {
+          console.error("Unexpected response structure:", response.data);
+          alert("Failed to load project details.");
+        }
       } catch (error) {
-        console.error("Error fetching project:", error);
+        console.error(
+          "Error fetching project:",
+          error.response?.data || error.message
+        );
+        alert("Error fetching project details.");
       }
     };
 

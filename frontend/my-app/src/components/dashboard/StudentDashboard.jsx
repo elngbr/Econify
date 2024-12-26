@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import CreateTeam from "./CreateTeam"; // Component to create a team
+import JoinTeam from "./JoinTeam"; // Component to join a team
 
 const StudentDashboard = () => {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState([]); // All projects
   const [loading, setLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState(null); // Project ID for modal
+  const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false); // Modal for creating a team
+  const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false); // Modal for joining a team
 
+  // Fetch projects on component load
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -23,6 +29,30 @@ const StudentDashboard = () => {
 
     fetchProjects();
   }, []);
+
+  // Open "Create Team" modal
+  const handleOpenCreateTeamForm = (projectId) => {
+    setSelectedProject(projectId);
+    setIsCreateTeamOpen(true);
+  };
+
+  // Close "Create Team" modal
+  const handleCloseCreateTeamForm = () => {
+    setIsCreateTeamOpen(false);
+    setSelectedProject(null);
+  };
+
+  // Open "Join Team" modal
+  const handleOpenJoinTeamForm = (projectId) => {
+    setSelectedProject(projectId);
+    setIsJoinTeamOpen(true);
+  };
+
+  // Close "Join Team" modal
+  const handleCloseJoinTeamForm = () => {
+    setIsJoinTeamOpen(false);
+    setSelectedProject(null);
+  };
 
   return (
     <div style={styles.container}>
@@ -45,10 +75,54 @@ const StudentDashboard = () => {
                 <p style={styles.formator}>
                   Formator: {project.formator || "Unknown"}
                 </p>
+
+                <div style={styles.buttonGroup}>
+                  {/* Conditional Buttons */}
+                  {project.isStudentInTeam ? (
+                    <p style={styles.teamInfo}>
+                      You are part of team: <strong>{project.teamName}</strong>
+                    </p>
+                  ) : (
+                    <>
+                      <button
+                        style={styles.cardButton}
+                        onClick={() =>
+                          handleOpenCreateTeamForm(project.projectId)
+                        }
+                      >
+                        Create Team
+                      </button>
+                      <button
+                        style={styles.cardButton}
+                        onClick={() =>
+                          handleOpenJoinTeamForm(project.projectId)
+                        }
+                      >
+                        Join Team
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             ))
           )}
         </div>
+      )}
+
+      {/* Create Team Modal */}
+      {isCreateTeamOpen && (
+        <CreateTeam
+          projectId={selectedProject}
+          onClose={handleCloseCreateTeamForm}
+        />
+      )}
+
+      {/* Join Team Modal */}
+      {isJoinTeamOpen && (
+        <JoinTeam
+          projectId={selectedProject}
+          onClose={handleCloseJoinTeamForm}
+        />
       )}
     </div>
   );
@@ -103,6 +177,26 @@ const styles = {
     fontSize: "14px",
     fontStyle: "italic",
     marginBottom: "10px",
+  },
+  buttonGroup: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "10px",
+    gap: "10px",
+  },
+  cardButton: {
+    backgroundColor: "#4a148c",
+    color: "#fff",
+    border: "none",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+  teamInfo: {
+    color: "#4a148c",
+    fontSize: "14px",
+    fontStyle: "italic",
   },
 };
 
