@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
-import CreateTeam from "./CreateTeam"; // Component to create a team
-import JoinTeam from "./JoinTeam"; // Component to join a team
+import CreateTeam from "./CreateTeam";
+import JoinTeam from "./JoinTeam";
 
 const StudentDashboard = () => {
   const [projects, setProjects] = useState([]); // All projects
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null); // Project ID for modal
+  const [selectedProject, setSelectedProject] = useState(null); // Selected project for modal
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false); // Modal for creating a team
   const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false); // Modal for joining a team
 
@@ -15,7 +15,6 @@ const StudentDashboard = () => {
     const fetchProjects = async () => {
       try {
         const response = await api.get("/users/student-dashboard");
-        console.log("Projects fetched:", response.data);
         setProjects(response.data.projects || []);
       } catch (error) {
         console.error(
@@ -54,6 +53,20 @@ const StudentDashboard = () => {
     setSelectedProject(null);
   };
 
+  // Remove user from team
+  const handleLeaveTeam = async (projectId) => {
+    try {
+      await api.post("/teams/leave", { projectId });
+      alert("You have left the team successfully.");
+      // Refresh projects to reflect updated team status
+      const response = await api.get("/users/student-dashboard");
+      setProjects(response.data.projects || []);
+    } catch (error) {
+      alert("Failed to leave the team. Please try again.");
+      console.error("Error leaving team:", error.response?.data || error.message);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Student Dashboard</h1>
@@ -79,9 +92,20 @@ const StudentDashboard = () => {
                 <div style={styles.buttonGroup}>
                   {/* Conditional Buttons */}
                   {project.isStudentInTeam ? (
-                    <p style={styles.teamInfo}>
-                      You are part of team: <strong>{project.teamName}</strong>
-                    </p>
+                    <>
+                      <button
+                        style={styles.cardButton}
+                        onClick={() => handleLeaveTeam(project.projectId)}
+                      >
+                        Leave Team ({project.studentTeamName})
+                      </button>
+                      <button
+                        style={styles.cardButton}
+                        onClick={() => alert("Send Deliverables functionality")}
+                      >
+                        Send Deliverables
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -180,9 +204,9 @@ const styles = {
   },
   buttonGroup: {
     display: "flex",
-    justifyContent: "space-between",
-    marginTop: "10px",
+    flexDirection: "column",
     gap: "10px",
+    marginTop: "10px",
   },
   cardButton: {
     backgroundColor: "#4a148c",
@@ -192,11 +216,6 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
     fontSize: "14px",
-  },
-  teamInfo: {
-    color: "#4a148c",
-    fontSize: "14px",
-    fontStyle: "italic",
   },
 };
 

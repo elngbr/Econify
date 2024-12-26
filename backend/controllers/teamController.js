@@ -30,14 +30,41 @@ const createTeam = async (req, res) => {
 const joinTeam = async (req, res) => {
   try {
     const { teamId } = req.body;
-    const team = await Team.findByPk(teamId, { include: [{ model: Project }] });
-    if (!team) return res.status(404).json({ error: "Team not found." });
-    const user = await User.findByPk(req.user.id);
-    if (user.teamId) {
-      return res.status(400).json({ error: "Already in a team." });
+
+    if (!teamId) {
+      return res.status(400).json({ error: "Team ID is required." });
     }
+
+    console.log("teamId received:", teamId);
+    console.log("User from token:", req.user);
+
+    // Check if team exists
+    const team = await Team.findByPk(teamId, {
+      include: [{ model: Project, as: "project" }],
+    });
+    if (!team) {
+      console.log(`Team with ID ${teamId} not found.`);
+      return res.status(404).json({ error: "Team not found." });
+    }
+
+    // Check if user exists
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      console.log(`User with ID ${req.user.id} not found.`);
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Check if user is already in a team
+    if (user.teamId) {
+      console.log(`User with ID ${req.user.id} is already in a team.`);
+      return res.status(400).json({ error: "You are already in a team." });
+    }
+
+    // Assign the user to the team
     user.teamId = teamId;
     await user.save();
+
+    console.log(`User ${user.id} successfully joined team ${teamId}.`);
     res.json({ message: "Successfully joined the team." });
   } catch (error) {
     console.error("Error joining team:", error.message);
@@ -58,17 +85,19 @@ const getTeamsByProject = async (req, res) => {
         },
       ],
     });
+
+    // Return an empty array if no teams are found
     if (!teams || teams.length === 0) {
-      return res.status(404).json({ error: "No teams found." });
+      console.log(`No teams found for project ID ${projectId}.`);
+      return res.status(200).json({ teams: [] }); // Send empty array as response
     }
+
     res.status(200).json({ teams });
   } catch (error) {
     console.error("Error fetching teams:", error.message);
     res.status(500).json({ error: "Server error while fetching teams." });
   }
 };
-
-
 
 // Controller to delete a team
 const deleteTeam = async (req, res) => {
