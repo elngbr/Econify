@@ -1,14 +1,20 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../services/api";
-import { AuthContext } from "../../context/AuthContext";
+import ViewMembers from "./ViewMembers"; // Import the ViewMembers component
 
 const ViewTeams = ({ userRole }) => {
-  const { id: projectId } = useParams(); // Get projectId from route
+  const { id: projectId } = useParams();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useContext(AuthContext); // Get user from context
+  const [modalData, setModalData] = useState({
+    isVisible: false,
+    message: "",
+    actionType: "", // "deleteTeam"
+    id: null,
+    name: "",
+  });
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -31,6 +37,41 @@ const ViewTeams = ({ userRole }) => {
     fetchTeams();
   }, [projectId]);
 
+  const handleDeleteTeam = (teamId, teamName) => {
+    setModalData({
+      isVisible: true,
+      message: `Are you sure you want to delete the team "${teamName}"?`,
+      actionType: "deleteTeam",
+      id: teamId,
+      name: teamName,
+    });
+  };
+
+  const closeModal = () => {
+    setModalData({
+      isVisible: false,
+      message: "",
+      actionType: "",
+      id: null,
+      name: "",
+    });
+  };
+
+  const executeAction = async () => {
+    try {
+      if (modalData.actionType === "deleteTeam") {
+        await api.delete(`/teams/${modalData.id}`);
+        setTeams(teams.filter((team) => team.id !== modalData.id));
+        alert(`Team "${modalData.name}" deleted successfully.`);
+      }
+    } catch (error) {
+      console.error("Error executing action:", error);
+      alert("Failed to execute action. Please try again.");
+    } finally {
+      closeModal();
+    }
+  };
+
   if (loading) return <p>Loading teams...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
@@ -40,34 +81,38 @@ const ViewTeams = ({ userRole }) => {
       {teams.length === 0 ? (
         <p style={styles.noTeams}>No teams available for this project.</p>
       ) : (
-        teams.map((team) => (
-          <div key={team.id} style={styles.teamCard}>
-            <h2 style={styles.teamName}>{team.name}</h2>
-            <ul style={styles.memberList}>
-              {team.members?.map((member) => (
-                <li key={member.id} style={styles.memberItem}>
-                  {member.name} ({member.email})
-                  {userRole === "professor" && (
-                    <button
-                      style={styles.removeButton}
-                      onClick={() => alert(`Remove user: ${member.id}`)}
-                    >
-                      Remove User
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {userRole === "professor" && (
-              <button
-                style={styles.deleteButton}
-                onClick={() => alert(`Delete team: ${team.id}`)}
-              >
-                Delete Team
+        <div style={styles.teamsContainer}>
+          {teams.map((team) => (
+            <div key={team.id} style={styles.teamCard}>
+              <h2 style={styles.teamName}>{team.name}</h2>
+              <ViewMembers teamId={team.id} userRole={userRole} />
+              {userRole === "professor" && (
+                <button
+                  style={styles.deleteButton}
+                  onClick={() => handleDeleteTeam(team.id, team.name)}
+                >
+                  Delete Team
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Confirmation Modal */}
+      {modalData.isVisible && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <p>{modalData.message}</p>
+            <div style={styles.modalActions}>
+              <button style={styles.confirmButton} onClick={executeAction}>
+                Confirm
               </button>
-            )}
+              <button style={styles.cancelButton} onClick={closeModal}>
+                Cancel
+              </button>
+            </div>
           </div>
-        ))
+        </div>
       )}
     </div>
   );
@@ -89,12 +134,18 @@ const styles = {
     color: "#616161",
     fontStyle: "italic",
   },
+  teamsContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "20px",
+    justifyContent: "center",
+  },
   teamCard: {
     backgroundColor: "#fff",
     border: "1px solid #d1c4e9",
     borderRadius: "10px",
     padding: "20px",
-    marginBottom: "10px",
+    width: "300px",
     textAlign: "center",
   },
   teamName: {
@@ -102,24 +153,6 @@ const styles = {
     fontSize: "18px",
     fontWeight: "bold",
     marginBottom: "10px",
-  },
-  memberList: {
-    listStyleType: "none",
-    padding: 0,
-  },
-  memberItem: {
-    color: "#616161",
-    marginBottom: "10px",
-  },
-  removeButton: {
-    backgroundColor: "#f44336",
-    color: "#fff",
-    border: "none",
-    padding: "5px 10px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "12px",
-    marginLeft: "10px",
   },
   deleteButton: {
     backgroundColor: "#f44336",
@@ -130,6 +163,47 @@ const styles = {
     cursor: "pointer",
     fontSize: "14px",
     marginTop: "10px",
+  },
+  modal: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: "20px",
+    borderRadius: "10px",
+    textAlign: "center",
+    width: "300px",
+  },
+  modalActions: {
+    display: "flex",
+    justifyContent: "space-around",
+    marginTop: "10px",
+  },
+  confirmButton: {
+    backgroundColor: "#4caf50",
+    color: "#fff",
+    border: "none",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+  cancelButton: {
+    backgroundColor: "#f44336",
+    color: "#fff",
+    border: "none",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontSize: "14px",
   },
 };
 

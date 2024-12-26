@@ -10,6 +10,7 @@ const {
   getTeamsByProject,
   removeUserFromTeam,
   deleteTeam,
+  getTeamMembers,
 } = require("../controllers/teamController");
 
 const router = express.Router();
@@ -18,7 +19,9 @@ const router = express.Router();
 router.post("/create", verifyToken, isStudent, createTeam);
 router.post("/join", verifyToken, isStudent, joinTeam);
 router.get("/project/:projectId", verifyToken, getTeamsByProject);
-router.post("/remove-user", verifyToken, isProfessor, removeUserFromTeam);
+
 router.delete("/:teamId", verifyToken, isProfessor, deleteTeam);
+router.get("/:teamId/members", verifyToken, getTeamMembers);
+router.post("/remove-user", verifyToken, isProfessor, removeUserFromTeam);
 
 module.exports = router;
