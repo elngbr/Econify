@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const StudentDashboard = () => {
-  const [projects, setProjects] = useState([]); // To store projects
-  const [loading, setLoading] = useState(true); // To handle loading state
-  const navigate = useNavigate();
+  const [myProjects, setMyProjects] = useState([]); // Projects where the student is a member
+  const [otherProjects, setOtherProjects] = useState([]); // Other available projects
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        console.log("Fetching all projects...");
-        const response = await api.get("/api/projects"); // Adjust endpoint if necessary
-        console.log("Projects fetched:", response.data.projects);
-        setProjects(response.data.projects || []);
+        const response = await api.get("/users/student-dashboard");
+        console.log("Projects fetched:", response.data);
+
+        setMyProjects(response.data.projectsWithStudent || []);
+        setOtherProjects(response.data.otherProjects || []);
       } catch (error) {
         console.error(
-          "Error fetching projects:",
+          "Error fetching student dashboard:",
           error.response?.data || error.message
         );
       } finally {
@@ -27,8 +27,9 @@ const StudentDashboard = () => {
     fetchProjects();
   }, []);
 
-  const viewProjectDetails = (projectId) => {
-    navigate(`/projects/${projectId}`); // Redirect to project details page
+  const joinProject = (projectId) => {
+    alert(`Joining project with ID: ${projectId}`);
+    // Add logic to join a project (e.g., API request to add student to a team)
   };
 
   return (
@@ -37,27 +38,58 @@ const StudentDashboard = () => {
       {loading ? (
         <p style={styles.loading}>Loading projects...</p>
       ) : (
-        <div style={styles.projectList}>
-          {projects.length === 0 ? (
-            <p style={styles.noProjects}>No projects found.</p>
-          ) : (
-            projects.map((project) => (
-              <div key={project.id} style={styles.projectCard}>
-                <h2 style={styles.projectTitle}>{project.title}</h2>
-                <p style={styles.projectDescription}>{project.description}</p>
-                <p style={styles.professorName}>
-                  Created by: {project.professor.name}
+        <>
+          <section>
+            <h2 style={styles.sectionTitle}>Projects You're Part Of</h2>
+            <div style={styles.projectList}>
+              {myProjects.length === 0 ? (
+                <p style={styles.noProjects}>
+                  You are not part of any projects.
                 </p>
-                <button
-                  style={styles.detailsButton}
-                  onClick={() => viewProjectDetails(project.id)}
-                >
-                  View Details
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+              ) : (
+                myProjects.map((project) => (
+                  <div key={project.projectId} style={styles.projectCard}>
+                    <h3 style={styles.projectTitle}>
+                      {project.projectTitle || "Untitled Project"}
+                    </h3>
+                    <p style={styles.projectDescription}>
+                      {project.projectDescription || "No description provided."}
+                    </p>
+                    <p style={styles.teamName}>
+                      Team: {project.teamName || "No team name"}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h2 style={styles.sectionTitle}>Available Projects</h2>
+            <div style={styles.projectList}>
+              {otherProjects.length === 0 ? (
+                <p style={styles.noProjects}>No other projects available.</p>
+              ) : (
+                otherProjects.map((project) => (
+                  <div key={project.projectId} style={styles.projectCard}>
+                    <h3 style={styles.projectTitle}>
+                      {project.projectTitle || "Untitled Project"}
+                    </h3>
+                    <p style={styles.projectDescription}>
+                      {project.projectDescription || "No description provided."}
+                    </p>
+                    <button
+                      style={styles.joinButton}
+                      onClick={() => joinProject(project.projectId)}
+                    >
+                      Join Project
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </>
       )}
     </div>
   );
@@ -66,13 +98,18 @@ const StudentDashboard = () => {
 const styles = {
   container: {
     padding: "20px",
-    backgroundColor: "#f3f2fc", // Light purple
+    backgroundColor: "#f3f2fc",
     minHeight: "100vh",
   },
   heading: {
     textAlign: "center",
-    color: "#4a148c", // Dark purple
+    color: "#4a148c",
     marginBottom: "20px",
+  },
+  sectionTitle: {
+    color: "#4a148c",
+    fontSize: "18px",
+    marginBottom: "10px",
   },
   loading: {
     textAlign: "center",
@@ -89,8 +126,8 @@ const styles = {
     color: "#4a148c",
   },
   projectCard: {
-    backgroundColor: "#fff", // White
-    border: "1px solid #d1c4e9", // Light border
+    backgroundColor: "#fff",
+    border: "1px solid #d1c4e9",
     borderRadius: "10px",
     padding: "20px",
     width: "300px",
@@ -98,21 +135,24 @@ const styles = {
     textAlign: "center",
   },
   projectTitle: {
-    color: "#4a148c", // Dark purple
+    color: "#4a148c",
+    fontSize: "20px",
+    fontWeight: "bold",
     marginBottom: "10px",
   },
   projectDescription: {
-    color: "#616161", // Gray
+    color: "#616161",
     marginBottom: "10px",
   },
-  professorName: {
-    color: "#4a148c", // Dark purple
-    fontWeight: "bold",
-    marginBottom: "15px",
+  teamName: {
+    color: "#4a148c",
+    fontSize: "14px",
+    fontStyle: "italic",
+    marginBottom: "10px",
   },
-  detailsButton: {
-    backgroundColor: "#4a148c", // Dark purple
-    color: "#fff", // White
+  joinButton: {
+    backgroundColor: "#4a148c",
+    color: "#fff",
     border: "none",
     padding: "10px 15px",
     borderRadius: "5px",

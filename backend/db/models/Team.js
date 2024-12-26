@@ -27,10 +27,10 @@ module.exports = (sequelize) => {
       as: "deliverables",
     });
 
-    // A team has many students
+    // A team has many students (members)
     Team.hasMany(models.User, {
       foreignKey: "teamId",
-      as: "students",
+      as: "students", // Alias for students
     });
   };
 
