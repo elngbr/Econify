@@ -55,6 +55,10 @@ const StudentDashboard = () => {
     setIsJoinTeamOpen(false);
   };
 
+  const handleLeaveTeamSuccess = () => {
+    fetchProjects();
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Student Dashboard</h1>
@@ -74,39 +78,44 @@ const StudentDashboard = () => {
                 <p style={styles.formator}>
                   Formator: {project.formator || "Unknown"}
                 </p>
-                <div style={styles.buttonGroup}>
-                  {project.isStudentInTeam ? (
-                    <>
-                      <LeaveTeam
-                        projectId={project.projectId}
-                        refreshDashboard={fetchProjects}
-                      />
-                      <SendDeliverable
-                        projectId={project.projectId}
-                        teamId={project.studentTeamId}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() =>
-                          handleOpenCreateTeamForm(project.projectId)
-                        }
-                      >
-                        Create Team
-                      </button>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() =>
-                          handleOpenJoinTeamForm(project.projectId)
-                        }
-                      >
-                        Join Team
-                      </button>
-                    </>
-                  )}
-                </div>
+                {project.isStudentInTeam ? (
+                  <div>
+                    <h4>Your Teams:</h4>
+                    {project.studentTeams.map((team) => (
+                      <div key={team.teamId} style={styles.teamSection}>
+                        <p>Team Name: {team.teamName}</p>
+                        {/* Leave Team Button */}
+                        <LeaveTeam
+                          projectId={project.projectId}
+                          teamId={team.teamId}
+                          onLeaveSuccess={handleLeaveTeamSuccess}
+                        />
+                        {/* Submit Deliverable Button */}
+                        <SendDeliverable
+                          projectId={project.projectId}
+                          teamId={team.teamId}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={styles.buttonGroup}>
+                    <button
+                      style={styles.cardButton}
+                      onClick={() =>
+                        handleOpenCreateTeamForm(project.projectId)
+                      }
+                    >
+                      Create Team
+                    </button>
+                    <button
+                      style={styles.cardButton}
+                      onClick={() => handleOpenJoinTeamForm(project.projectId)}
+                    >
+                      Join Team
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -146,6 +155,12 @@ const styles = {
     fontSize: "14px",
     fontStyle: "italic",
     marginTop: "10px",
+  },
+  teamSection: {
+    marginTop: "10px",
+    padding: "10px",
+    backgroundColor: "#f8f8f8",
+    borderRadius: "5px",
   },
   buttonGroup: { display: "flex", flexDirection: "column", gap: "10px" },
   cardButton: {

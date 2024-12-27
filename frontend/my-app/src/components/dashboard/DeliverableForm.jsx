@@ -5,7 +5,9 @@ import api from "../../services/api";
 const DeliverableForm = () => {
   const { state } = useLocation(); // Extract state from navigation
   const { teamId } = state || {}; // Get teamId from the state
-  const [deliverable, setDeliverable] = useState("");
+  const [title, setTitle] = useState(""); // State for the deliverable title
+  const [description, setDescription] = useState(""); // State for the deliverable description
+  const [dueDate, setDueDate] = useState(""); // State for the due date
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,9 +19,9 @@ const DeliverableForm = () => {
     try {
       const response = await api.post("/deliverables/create", {
         teamId, // Use teamId from state
-        title: "Deliverable Title", // Replace with actual title input if required
-        description: deliverable,
-        dueDate: new Date().toISOString(),
+        title, // Use the title from input
+        description, // Use the description from input
+        dueDate, // Use the due date from input
       });
       alert(response.data.message || "Deliverable submitted successfully.");
       navigate("/student-dashboard");
@@ -39,11 +41,29 @@ const DeliverableForm = () => {
     <div style={styles.container}>
       <h1 style={styles.heading}>Submit Deliverable</h1>
       <form onSubmit={handleSubmit} style={styles.form}>
+        {/* Input for Deliverable Title */}
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter the deliverable title"
+          style={styles.input}
+          required
+        />
+        {/* Textarea for Deliverable Description */}
         <textarea
-          value={deliverable}
-          onChange={(e) => setDeliverable(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter your deliverable content here..."
           style={styles.textarea}
+          required
+        />
+        {/* Input for Due Date */}
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          style={styles.input}
           required
         />
         <button type="submit" style={styles.submitButton}>
@@ -75,6 +95,12 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "15px",
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
   },
   textarea: {
     width: "100%",
