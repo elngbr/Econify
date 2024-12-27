@@ -52,6 +52,8 @@ const joinTeam = async (req, res) => {
       return res.status(400).json({ error: "Team ID is required." });
     }
 
+    console.log(`Attempting to join team with ID: ${teamId}`);
+
     // Find the team and its associated project
     const team = await Team.findByPk(teamId, {
       include: [{ model: Project, as: "project" }], // Correct alias for Project
@@ -86,6 +88,10 @@ const joinTeam = async (req, res) => {
     // Add the user to the team
     const user = await User.findByPk(userId);
     await team.addStudent(user); // Add association in UserTeams table
+
+    console.log(
+      `User with ID: ${userId} successfully joined team with ID: ${teamId}`
+    );
 
     res.status(200).json({ message: "Successfully joined the team." });
   } catch (error) {
