@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User } = require("../db/models");
+const { User,Team } = require("../db/models");
 
 // Register User
 const registerUser = async (req, res) => {
@@ -74,5 +74,37 @@ const loginUser = async (req, res) => {
 const getProfile = async (req, res) => {
   res.json(req.user); // req.user is populated by verifyToken middleware
 };
+const getCurrentTeamForProject = async (req, res) => {
+  try {
+    const userId = req.user.id; // The authenticated user's ID
+    const { projectId } = req.params; // The project ID from the route params
 
-module.exports = { registerUser, loginUser, getProfile };
+    // Check if the user is part of a team for this project
+    const team = await Team.findOne({
+      where: { projectId },
+      include: [
+        {
+          model: User,
+          as: "students",
+          where: { id: userId }, // Find if this user is part of the team
+        },
+      ],
+    });
+
+    if (!team) {
+      return res.status(200).json({ team: null }); // No team found for this project
+    }
+
+    // Return the team details
+    res.status(200).json({
+      team: {
+        id: team.id,
+        name: team.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching current team:", error.message);
+    res.status(500).json({ error: "Server error while fetching current team." });
+  }
+};
+module.exports = { registerUser, loginUser, getProfile, getCurrentTeamForProject };

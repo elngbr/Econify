@@ -7,18 +7,34 @@ const createTeam = async (req, res) => {
     if (req.user.role !== "student") {
       return res.status(403).json({ error: "Only students can create teams." });
     }
+
     const project = await Project.findByPk(projectId);
     if (!project) {
       return res.status(404).json({ error: "Project not found." });
     }
+
+    // Check if the student is already in a team for this project
+    const existingTeam = await Team.findOne({
+      where: { projectId },
+      include: [{ model: User, as: "students", where: { id: req.user.id } }],
+    });
+
+    if (existingTeam) {
+      return res
+        .status(400)
+        .json({ error: "You are already part of a team for this project." });
+    }
+
     const duplicateTeam = await Team.findOne({ where: { name, projectId } });
     if (duplicateTeam) {
       return res.status(400).json({ error: "Team name already exists." });
     }
+
     const team = await Team.create({ name, projectId });
     const user = await User.findByPk(req.user.id);
     user.teamId = team.id;
     await user.save();
+
     res.status(201).json({ message: "Team created successfully.", team });
   } catch (error) {
     console.error("Error creating team:", error.message);
@@ -35,37 +51,46 @@ const joinTeam = async (req, res) => {
       return res.status(400).json({ error: "Team ID is required." });
     }
 
-    console.log("teamId received:", teamId);
-    console.log("User from token:", req.user);
-
-    // Check if team exists
+    // Find the team and include its associated project
     const team = await Team.findByPk(teamId, {
-      include: [{ model: Project, as: "project" }],
+      include: [{ model: Project, as: "project" }], // Correct alias for Project
     });
+
     if (!team) {
-      console.log(`Team with ID ${teamId} not found.`);
       return res.status(404).json({ error: "Team not found." });
     }
 
-    // Check if user exists
-    const user = await User.findByPk(req.user.id);
+    // Find the user and include their current team
+    const user = await User.findByPk(req.user.id, {
+      include: [
+        {
+          model: Team,
+          as: "team", // Correct alias for the user's current team
+          include: [{ model: Project, as: "project" }], // Include the project for validation
+        },
+      ],
+    });
+
     if (!user) {
-      console.log(`User with ID ${req.user.id} not found.`);
       return res.status(404).json({ error: "User not found." });
     }
 
-    // Check if user is already in a team
-    if (user.teamId) {
-      console.log(`User with ID ${req.user.id} is already in a team.`);
-      return res.status(400).json({ error: "You are already in a team." });
+    // Check if the user is already in a team for the same project
+    if (
+      user.team &&
+      user.team.project &&
+      user.team.project.id === team.project.id
+    ) {
+      return res
+        .status(400)
+        .json({ error: "You are already part of a team for this project." });
     }
 
-    // Assign the user to the team
+    // Assign the user to the new team
     user.teamId = teamId;
     await user.save();
 
-    console.log(`User ${user.id} successfully joined team ${teamId}.`);
-    res.json({ message: "Successfully joined the team." });
+    res.status(200).json({ message: "Successfully joined the team." });
   } catch (error) {
     console.error("Error joining team:", error.message);
     res.status(500).json({ error: "Server error while joining team." });
@@ -75,27 +100,56 @@ const joinTeam = async (req, res) => {
 const getTeamsByProject = async (req, res) => {
   try {
     const { projectId } = req.params;
+
     const teams = await Team.findAll({
       where: { projectId },
       include: [
         {
           model: User,
-          as: "students",
+          as: "students", // Correct alias for students
           attributes: ["id", "name", "email"],
         },
       ],
     });
 
-    // Return an empty array if no teams are found
     if (!teams || teams.length === 0) {
       console.log(`No teams found for project ID ${projectId}.`);
-      return res.status(200).json({ teams: [] }); // Send empty array as response
+      return res.status(200).json({ teams: [] });
     }
 
     res.status(200).json({ teams });
   } catch (error) {
     console.error("Error fetching teams:", error.message);
     res.status(500).json({ error: "Server error while fetching teams." });
+  }
+};
+
+const leaveTeam = async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    const userId = req.user.id;
+
+    const team = await Team.findOne({
+      include: [
+        { model: Project, as: "project", where: { id: projectId } },
+        { model: User, as: "students", where: { id: userId } },
+      ],
+    });
+
+    if (!team) {
+      return res
+        .status(404)
+        .json({ error: "You are not part of a team for this project." });
+    }
+
+    const user = await User.findByPk(userId);
+    user.teamId = null;
+    await user.save();
+
+    res.status(200).json({ message: "You have left the team successfully." });
+  } catch (error) {
+    console.error("Error leaving team:", error.message);
+    res.status(500).json({ error: "Server error while leaving the team." });
   }
 };
 
@@ -168,4 +222,5 @@ module.exports = {
   deleteTeam,
   getTeamMembers,
   removeUserFromTeam,
+  leaveTeam,
 };

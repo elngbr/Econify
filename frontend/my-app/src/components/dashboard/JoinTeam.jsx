@@ -1,42 +1,26 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 
-const JoinTeam = ({ projectId, onClose }) => {
+const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
   const [teams, setTeams] = useState([]); // List of teams
   const [loading, setLoading] = useState(true); // Loading state
   const [expandedTeamId, setExpandedTeamId] = useState(null); // Track expanded team for member view
-  const [modalData, setModalData] = useState({
-    isVisible: false,
-    message: "",
-    type: "", // "error" or "success"
-  }); // State for error/success modal
-  const [isPartOfTeam, setIsPartOfTeam] = useState(false); // If user is part of a team
-  const [currentTeamName, setCurrentTeamName] = useState(""); // Name of the team user belongs to
 
   useEffect(() => {
-    const fetchTeamsAndUserStatus = async () => {
+    const fetchTeams = async () => {
       try {
         const response = await api.get(`/teams/project/${projectId}`);
         setTeams(response.data.teams || []);
-
-        // Check if the user is already in a team for this project
-        const userResponse = await api.get(`/users/current-team/${projectId}`);
-        if (userResponse.data.team) {
-          setIsPartOfTeam(true);
-          setCurrentTeamName(userResponse.data.team.name);
-        }
       } catch (error) {
-        openModal("Error fetching data. Please try again.", "error");
-        console.error("Error fetching teams or user status:", error);
+        console.error("Error fetching teams:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTeamsAndUserStatus();
+    fetchTeams();
   }, [projectId]);
 
-  // Fetch members for a specific team
   const fetchTeamMembers = async (teamId) => {
     try {
       const response = await api.get(`/teams/${teamId}/members`);
@@ -45,22 +29,15 @@ const JoinTeam = ({ projectId, onClose }) => {
       );
       setTeams(updatedTeams);
     } catch (error) {
-      openModal("Error fetching team members. Please try again.", "error");
       console.error("Error fetching team members:", error);
     }
   };
 
   const handleJoinTeam = async (teamId) => {
     try {
-      const response = await api.post("/teams/join", { teamId });
-      openModal(response.data.message, "success");
-      onClose(); // Close the modal after successfully joining
+      await api.post("/teams/join", { teamId });
+      onJoinSuccess(); // Notify parent about successful join
     } catch (error) {
-      openModal(
-        error.response?.data?.error ||
-          "Failed to join the team. Please try again.",
-        "error"
-      );
       console.error("Error joining team:", error);
     }
   };
@@ -74,47 +51,12 @@ const JoinTeam = ({ projectId, onClose }) => {
     }
   };
 
-  // Open modal for error/success messages
-  const openModal = (message, type) => {
-    setModalData({
-      isVisible: true,
-      message,
-      type,
-    });
-  };
-
-  // Close modal
-  const closeModal = () => {
-    setModalData({
-      isVisible: false,
-      message: "",
-      type: "",
-    });
-  };
-
   return (
     <div style={styles.modal}>
       <div style={styles.modalContent}>
-        <h2>
-          {isPartOfTeam ? `Your Team: ${currentTeamName}` : "Join a Team"}
-        </h2>
+        <h2>Join a Team</h2>
         {loading ? (
           <p>Loading teams...</p>
-        ) : isPartOfTeam ? (
-          <div style={styles.teamActions}>
-            <button
-              style={styles.actionButton}
-              onClick={() => alert("Send Deliverables functionality")}
-            >
-              Send Deliverables
-            </button>
-            <button
-              style={styles.actionButton}
-              onClick={() => alert("View Deliverables functionality")}
-            >
-              View Deliverables
-            </button>
-          </div>
         ) : teams.length === 0 ? (
           <p>No teams available for this project.</p>
         ) : (
@@ -162,26 +104,6 @@ const JoinTeam = ({ projectId, onClose }) => {
           Close
         </button>
       </div>
-
-      {/* Error/Success Modal */}
-      {modalData.isVisible && (
-        <div style={styles.errorModal}>
-          <div style={styles.errorModalContent}>
-            <p
-              style={
-                modalData.type === "error"
-                  ? styles.errorText
-                  : styles.successText
-              }
-            >
-              {modalData.message}
-            </p>
-            <button onClick={closeModal} style={styles.modalCloseButton}>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -210,8 +132,6 @@ const styles = {
     padding: 0,
   },
   teamItem: {
-    display: "flex",
-    flexDirection: "column",
     marginBottom: "10px",
     border: "1px solid #d1c4e9",
     borderRadius: "8px",
@@ -224,7 +144,6 @@ const styles = {
     padding: "5px 10px",
     borderRadius: "5px",
     cursor: "pointer",
-    margin: "5px 0",
   },
   membersContainer: {
     marginTop: "10px",
@@ -245,65 +164,14 @@ const styles = {
     color: "#fff",
     border: "none",
     padding: "5px 10px",
-    cursor: "pointer",
     borderRadius: "5px",
-    marginTop: "10px",
+    cursor: "pointer",
   },
   closeButton: {
     backgroundColor: "#616161",
     color: "#fff",
     border: "none",
     padding: "10px 15px",
-    cursor: "pointer",
-    borderRadius: "5px",
-    marginTop: "15px",
-  },
-  teamActions: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  actionButton: {
-    backgroundColor: "#4a148c",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  errorModal: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorModalContent: {
-    backgroundColor: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
-    textAlign: "center",
-    width: "300px",
-  },
-  errorText: {
-    color: "#f44336",
-    marginBottom: "10px",
-  },
-  successText: {
-    color: "#4caf50",
-    marginBottom: "10px",
-  },
-  modalCloseButton: {
-    backgroundColor: "#4a148c",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    cursor: "pointer",
     borderRadius: "5px",
   },
 };
