@@ -46,12 +46,13 @@ const createTeam = async (req, res) => {
 const joinTeam = async (req, res) => {
   try {
     const { teamId } = req.body;
+    const userId = req.user.id;
 
     if (!teamId) {
       return res.status(400).json({ error: "Team ID is required." });
     }
 
-    // Find the team and include its associated project
+    // Find the team and its associated project
     const team = await Team.findByPk(teamId, {
       include: [{ model: Project, as: "project" }], // Correct alias for Project
     });
@@ -60,40 +61,36 @@ const joinTeam = async (req, res) => {
       return res.status(404).json({ error: "Team not found." });
     }
 
-    // Find the user and include their current team
-    const user = await User.findByPk(req.user.id, {
+    // Check if the user is already in a team for the same project
+    const existingMembership = await Team.findOne({
       include: [
         {
-          model: Team,
-          as: "team", // Correct alias for the user's current team
-          include: [{ model: Project, as: "project" }], // Include the project for validation
+          model: User,
+          as: "students",
+          where: { id: userId },
+        },
+        {
+          model: Project,
+          as: "project",
+          where: { id: team.projectId }, // Ensure the same project
         },
       ],
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    if (existingMembership) {
+      return res.status(400).json({
+        error: "You are already part of a team for this project.",
+      });
     }
 
-    // Check if the user is already in a team for the same project
-    if (
-      user.team &&
-      user.team.project &&
-      user.team.project.id === team.project.id
-    ) {
-      return res
-        .status(400)
-        .json({ error: "You are already part of a team for this project." });
-    }
-
-    // Assign the user to the new team
-    user.teamId = teamId;
-    await user.save();
+    // Add the user to the team
+    const user = await User.findByPk(userId);
+    await team.addStudent(user); // Add association in UserTeams table
 
     res.status(200).json({ message: "Successfully joined the team." });
   } catch (error) {
     console.error("Error joining team:", error.message);
-    res.status(500).json({ error: "Server error while joining team." });
+    res.status(500).json({ error: "Server error while joining the team." });
   }
 };
 
@@ -129,6 +126,7 @@ const leaveTeam = async (req, res) => {
     const { projectId } = req.body;
     const userId = req.user.id;
 
+    // Find the user's current team for the project
     const team = await Team.findOne({
       include: [
         { model: Project, as: "project", where: { id: projectId } },
@@ -143,8 +141,7 @@ const leaveTeam = async (req, res) => {
     }
 
     const user = await User.findByPk(userId);
-    user.teamId = null;
-    await user.save();
+    await team.removeStudent(user); // Remove association in UserTeams table
 
     res.status(200).json({ message: "You have left the team successfully." });
   } catch (error) {

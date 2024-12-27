@@ -19,18 +19,18 @@ const getStudentDashboard = async (req, res) => {
           ],
         },
         {
-          model: User, // Include the professor who created the project
-          as: "professor",
-          attributes: ["id", "name", "email"], // Fetch professor details
+          model: User,
+          as: "professor", // Include the professor who created the project
+          attributes: ["id", "name", "email"],
         },
       ],
     });
 
-    // Format the response for the frontend
     const formattedProjects = projects.map((project) => {
       const studentTeam = project.teams.find((team) =>
         team.students.some((student) => student.id === studentId)
       );
+
       return {
         projectId: project.id,
         projectTitle: project.title,
