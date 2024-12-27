@@ -60,9 +60,10 @@ module.exports = (sequelize) => {
     });
 
     // Students belong to a team
-    User.belongsTo(models.Team, {
-      foreignKey: "teamId",
-      as: "team",
+    User.belongsToMany(models.Team, {
+      through: "UserTeams",
+      as: "teams",
+      foreignKey: "userId",
     });
 
     // Students can act as jurors for deliverables

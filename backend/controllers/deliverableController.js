@@ -1,9 +1,18 @@
-const { Deliverable, Team, Project, User, DeliverableJury, Grade } = require("../db/models");
+const {
+  Deliverable,
+  Team,
+  Project,
+  User,
+  DeliverableJury,
+  Grade,
+} = require("../db/models");
 const { Op } = require("sequelize");
 
 const createDeliverable = async (req, res) => {
   try {
     const { title, description, dueDate, teamId } = req.body;
+
+    console.log(`Received createDeliverable request with teamId: ${teamId}`);
 
     // Verify the team exists
     const team = await Team.findByPk(teamId, {
@@ -11,11 +20,13 @@ const createDeliverable = async (req, res) => {
     });
 
     if (!team) {
+      console.log(`Team with ID ${teamId} not found.`);
       return res.status(404).json({ error: "Team not found." });
     }
 
     // Ensure the user is part of the team
-    if (req.user.teamId !== team.id) {
+    const isUserInTeam = await team.hasStudent(req.user.id);
+    if (!isUserInTeam) {
       return res.status(403).json({ error: "You do not belong to this team." });
     }
 
@@ -25,7 +36,9 @@ const createDeliverable = async (req, res) => {
     });
 
     if (existingDeliverable) {
-      return res.status(400).json({ error: "A deliverable with this title already exists." });
+      return res
+        .status(400)
+        .json({ error: "A deliverable with this title already exists." });
     }
 
     // Create deliverable
@@ -36,7 +49,9 @@ const createDeliverable = async (req, res) => {
       teamId,
     });
 
-    res.status(201).json({ message: "Deliverable created successfully.", deliverable });
+    res
+      .status(201)
+      .json({ message: "Deliverable created successfully.", deliverable });
   } catch (error) {
     console.error("Error creating deliverable:", error.message);
     res.status(500).json({ error: "Server error while creating deliverable." });
@@ -52,7 +67,9 @@ const getDeliverablesByTeam = async (req, res) => {
     });
 
     if (!deliverables || deliverables.length === 0) {
-      return res.status(404).json({ error: "No deliverables found for this team." });
+      return res
+        .status(404)
+        .json({ error: "No deliverables found for this team." });
     }
 
     res.status(200).json({ deliverables });
@@ -70,7 +87,8 @@ const assignJuryToDeliverable = async (req, res) => {
       include: [{ model: Team, as: "team" }],
     });
 
-    if (!deliverable) return res.status(404).json({ error: "Deliverable not found." });
+    if (!deliverable)
+      return res.status(404).json({ error: "Deliverable not found." });
 
     const teamId = deliverable.team.id;
 
@@ -79,7 +97,9 @@ const assignJuryToDeliverable = async (req, res) => {
     });
 
     if (potentialJurors.length < jurySize) {
-      return res.status(400).json({ error: "Not enough students to assign as jurors." });
+      return res
+        .status(400)
+        .json({ error: "Not enough students to assign as jurors." });
     }
 
     const selectedJurors = potentialJurors
@@ -95,7 +115,10 @@ const assignJuryToDeliverable = async (req, res) => {
 
     res.status(201).json({
       message: "Jury assigned successfully.",
-      jurors: selectedJurors.map((juror) => ({ id: juror.id, name: juror.name })),
+      jurors: selectedJurors.map((juror) => ({
+        id: juror.id,
+        name: juror.name,
+      })),
     });
   } catch (error) {
     console.error("Error assigning jury:", error.message);
@@ -112,7 +135,9 @@ const submitGrade = async (req, res) => {
     });
 
     if (!juryMember) {
-      return res.status(403).json({ error: "You are not authorized to grade this deliverable." });
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to grade this deliverable." });
     }
 
     const existingGrade = await Grade.findOne({
@@ -150,7 +175,9 @@ const getDeliverableGrades = async (req, res) => {
     }
 
     if (!deliverable.released) {
-      return res.status(403).json({ error: "Grades for this deliverable are not yet released." });
+      return res
+        .status(403)
+        .json({ error: "Grades for this deliverable are not yet released." });
     }
 
     const grades = await Grade.findAll({
@@ -159,7 +186,9 @@ const getDeliverableGrades = async (req, res) => {
     });
 
     if (grades.length === 0) {
-      return res.status(404).json({ error: "No grades found for this deliverable." });
+      return res
+        .status(404)
+        .json({ error: "No grades found for this deliverable." });
     }
 
     const averageGrade =
@@ -174,7 +203,6 @@ const getDeliverableGrades = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching grades." });
   }
 };
-
 
 const getTeamMembersByDeliverable = async (req, res) => {
   try {
@@ -199,7 +227,9 @@ const getTeamMembersByDeliverable = async (req, res) => {
     const team = deliverable.team;
 
     if (!team) {
-      return res.status(404).json({ error: "No team found for this deliverable." });
+      return res
+        .status(404)
+        .json({ error: "No team found for this deliverable." });
     }
 
     res.status(200).json({
@@ -209,7 +239,9 @@ const getTeamMembersByDeliverable = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching team members:", error.message);
-    res.status(500).json({ error: "Server error while fetching team members." });
+    res
+      .status(500)
+      .json({ error: "Server error while fetching team members." });
   }
 };
 const releaseDeliverableGrades = async (req, res) => {
@@ -227,7 +259,9 @@ const releaseDeliverableGrades = async (req, res) => {
     await deliverable.save();
 
     res.status(200).json({
-      message: `Deliverable grades ${deliverable.released ? "released" : "hidden"} successfully.`,
+      message: `Deliverable grades ${
+        deliverable.released ? "released" : "hidden"
+      } successfully.`,
       deliverable,
     });
   } catch (error) {
@@ -242,5 +276,6 @@ module.exports = {
   assignJuryToDeliverable,
   submitGrade,
   getDeliverableGrades,
-  getTeamMembersByDeliverable,releaseDeliverableGrades
+  getTeamMembersByDeliverable,
+  releaseDeliverableGrades,
 };

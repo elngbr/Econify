@@ -28,9 +28,10 @@ module.exports = (sequelize) => {
     });
 
     // A team has many students (members)
-    Team.hasMany(models.User, {
+    Team.belongsToMany(models.User, {
+      through: "UserTeams",
+      as: "students",
       foreignKey: "teamId",
-      as: "students", // Alias for students
     });
   };
 
