@@ -14,13 +14,19 @@ const getStudentDashboard = async (req, res) => {
               model: User,
               as: "students",
               where: { id: studentId }, // Check if the student is in this team
-              required: false,
+              required: false, // Include teams even if the student is not in them
             },
           ],
+        },
+        {
+          model: User, // Include the professor who created the project
+          as: "professor",
+          attributes: ["id", "name", "email"], // Fetch professor details
         },
       ],
     });
 
+    // Format the response for the frontend
     const formattedProjects = projects.map((project) => {
       const studentTeam = project.teams.find((team) =>
         team.students.some((student) => student.id === studentId)
@@ -29,7 +35,7 @@ const getStudentDashboard = async (req, res) => {
         projectId: project.id,
         projectTitle: project.title,
         projectDescription: project.description,
-        formator: project.formator,
+        formator: project.professor ? project.professor.name : "Unknown",
         isStudentInTeam: !!studentTeam, // True if the student is in a team
         studentTeamName: studentTeam ? studentTeam.name : null, // Team name or null
       };

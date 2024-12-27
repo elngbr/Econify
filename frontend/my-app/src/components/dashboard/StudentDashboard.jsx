@@ -2,69 +2,66 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import CreateTeam from "./CreateTeam";
 import JoinTeam from "./JoinTeam";
+import LeaveTeam from "./LeaveTeam";
+import SendDeliverable from "./SendDeliverable";
 
 const StudentDashboard = () => {
   const [projects, setProjects] = useState([]); // All projects
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null); // Selected project for modal
-  const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false); // Modal for creating a team
-  const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false); // Modal for joining a team
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
+  const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false);
+  const [confirmationModal, setConfirmationModal] = useState(false); // Confirmation modal state
 
   // Fetch projects on component load
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await api.get("/users/student-dashboard");
-        setProjects(response.data.projects || []);
-      } catch (error) {
-        console.error(
-          "Error fetching student dashboard:",
-          error.response?.data || error.message
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProjects = async () => {
+    try {
+      const response = await api.get("/users/student-dashboard");
+      setProjects(response.data.projects || []);
+    } catch (error) {
+      console.error(
+        "Error fetching student dashboard:",
+        error.response?.data || error.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProjects();
   }, []);
 
-  // Open "Create Team" modal
+  // Open and close modals
   const handleOpenCreateTeamForm = (projectId) => {
     setSelectedProject(projectId);
     setIsCreateTeamOpen(true);
   };
 
-  // Close "Create Team" modal
   const handleCloseCreateTeamForm = () => {
     setIsCreateTeamOpen(false);
     setSelectedProject(null);
   };
 
-  // Open "Join Team" modal
   const handleOpenJoinTeamForm = (projectId) => {
     setSelectedProject(projectId);
     setIsJoinTeamOpen(true);
   };
 
-  // Close "Join Team" modal
   const handleCloseJoinTeamForm = () => {
     setIsJoinTeamOpen(false);
     setSelectedProject(null);
   };
 
-  // Remove user from team
-  const handleLeaveTeam = async (projectId) => {
-    try {
-      await api.post("/teams/leave", { projectId });
-      alert("You have left the team successfully.");
-      // Refresh projects to reflect updated team status
-      const response = await api.get("/users/student-dashboard");
-      setProjects(response.data.projects || []);
-    } catch (error) {
-      alert("Failed to leave the team. Please try again.");
-      console.error("Error leaving team:", error.response?.data || error.message);
-    }
+  // Handle Join Team Success
+  const handleJoinSuccess = () => {
+    fetchProjects(); // Refresh projects
+    setIsJoinTeamOpen(false); // Close the Join Team modal
+    setConfirmationModal(true); // Show confirmation modal
+  };
+
+  const closeConfirmationModal = () => {
+    setConfirmationModal(false);
   };
 
   return (
@@ -88,23 +85,17 @@ const StudentDashboard = () => {
                 <p style={styles.formator}>
                   Formator: {project.formator || "Unknown"}
                 </p>
-
                 <div style={styles.buttonGroup}>
-                  {/* Conditional Buttons */}
                   {project.isStudentInTeam ? (
                     <>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() => handleLeaveTeam(project.projectId)}
-                      >
-                        Leave Team ({project.studentTeamName})
-                      </button>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() => alert("Send Deliverables functionality")}
-                      >
-                        Send Deliverables
-                      </button>
+                      <LeaveTeam
+                        projectId={project.projectId}
+                        refreshDashboard={fetchProjects}
+                      />
+                      <SendDeliverable
+                        projectId={project.projectId}
+                        refreshDashboard={fetchProjects}
+                      />
                     </>
                   ) : (
                     <>
@@ -133,7 +124,6 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      {/* Create Team Modal */}
       {isCreateTeamOpen && (
         <CreateTeam
           projectId={selectedProject}
@@ -141,12 +131,27 @@ const StudentDashboard = () => {
         />
       )}
 
-      {/* Join Team Modal */}
       {isJoinTeamOpen && (
         <JoinTeam
           projectId={selectedProject}
           onClose={handleCloseJoinTeamForm}
+          onJoinSuccess={handleJoinSuccess} // Trigger success callback
         />
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmationModal && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <h3>Successfully joined the team!</h3>
+            <button
+              style={styles.confirmButton}
+              onClick={closeConfirmationModal}
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -216,6 +221,32 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
     fontSize: "14px",
+  },
+  modal: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: "20px",
+    borderRadius: "10px",
+    textAlign: "center",
+    width: "300px",
+  },
+  confirmButton: {
+    backgroundColor: "#4a148c",
+    color: "#fff",
+    border: "none",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
 

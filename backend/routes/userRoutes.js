@@ -3,6 +3,7 @@ const {
   registerUser,
   loginUser,
   getProfile,
+  getCurrentTeamForProject,
 } = require("../controllers/userController");
 const { getProfessorDashboard } = require("../controllers/professorController");
 const { getStudentDashboard } = require("../controllers/studentController");
@@ -30,6 +31,12 @@ router.get(
   verifyToken,
   isProfessor,
   getProfessorDashboard
+);
+router.get(
+  "/current-team/:projectId",
+  verifyToken,
+  isStudent,
+  getCurrentTeamForProject
 );
 
 module.exports = router;
