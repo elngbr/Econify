@@ -18,6 +18,11 @@ const getStudentDashboard = async (req, res) => {
             },
           ],
         },
+        {
+          model: User, // Include the professor who created the project
+          as: "professor", // Keep the alias as "professor"
+          attributes: ["id", "name", "email"], // Fetch professor details
+        },
       ],
     });
 
@@ -29,9 +34,9 @@ const getStudentDashboard = async (req, res) => {
         projectId: project.id,
         projectTitle: project.title,
         projectDescription: project.description,
-        formator: project.formator,
-        isStudentInTeam: !!studentTeam, // True if the student is in a team
-        studentTeamName: studentTeam ? studentTeam.name : null, // Team name or null
+        formator: project.professor ? project.professor.name : "Unknown", // Rename "professor" to "formator"
+        isStudentInTeam: !!studentTeam,
+        studentTeamName: studentTeam ? studentTeam.name : null,
       };
     });
 
