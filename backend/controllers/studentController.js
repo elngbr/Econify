@@ -1,9 +1,10 @@
-const { Project, Team, User } = require("../db/models");
+const { Project, Team, User, Deliverable } = require("../db/models");
 
 const getStudentDashboard = async (req, res) => {
   try {
     const studentId = req.user.id;
 
+    // Fetch all projects, their teams, and associated professor
     const projects = await Project.findAll({
       include: [
         {
@@ -13,21 +14,33 @@ const getStudentDashboard = async (req, res) => {
             {
               model: User,
               as: "students",
-              where: { id: studentId }, // Check if the student is in this team
-              required: false, // Include teams even if the student is not in them
+              where: { id: studentId },
+              required: false,
+            },
+            {
+              model: Deliverable, // Include deliverables for each team
+              as: "deliverables",
+              attributes: [
+                "id",
+                "title",
+                "description",
+                "dueDate",
+                "lastDeliverable",
+              ],
             },
           ],
         },
         {
           model: User,
-          as: "professor", // Include the professor who created the project
+          as: "professor",
           attributes: ["id", "name", "email"],
         },
       ],
     });
 
+    // Format the response
     const formattedProjects = projects.map((project) => {
-      const studentTeam = project.teams.find((team) =>
+      const studentTeams = project.teams.filter((team) =>
         team.students.some((student) => student.id === studentId)
       );
 
@@ -36,8 +49,14 @@ const getStudentDashboard = async (req, res) => {
         projectTitle: project.title,
         projectDescription: project.description,
         formator: project.professor ? project.professor.name : "Unknown",
-        isStudentInTeam: !!studentTeam, // True if the student is in a team
-        studentTeamName: studentTeam ? studentTeam.name : null, // Team name or null
+        isStudentInTeam: studentTeams.length > 0,
+        studentTeams: studentTeams.map((team) => ({
+          teamId: team.id,
+          teamName: team.name,
+          deliverables: team.deliverables || [],
+          lastDeliverableId:
+            team.deliverables?.find((d) => d.lastDeliverable)?.id || null,
+        })),
       };
     });
 

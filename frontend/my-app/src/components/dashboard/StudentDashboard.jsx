@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import CreateTeam from "./CreateTeam";
 import JoinTeam from "./JoinTeam";
@@ -12,10 +13,41 @@ const StudentDashboard = () => {
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false);
 
+  const navigate = useNavigate();
+
   const fetchProjects = async () => {
     try {
       const response = await api.get("/users/student-dashboard");
-      setProjects(response.data.projects || []);
+      const projects = response.data.projects || [];
+
+      const projectsWithDeliverables = await Promise.all(
+        projects.map(async (project) => {
+          const studentTeamsWithDeliverables = await Promise.all(
+            project.studentTeams.map(async (team) => {
+              try {
+                const deliverablesResponse = await api.get(
+                  `/deliverables/team/${team.teamId}`
+                );
+                return {
+                  ...team,
+                  deliverables: deliverablesResponse.data.deliverables || [],
+                  lastDeliverableId:
+                    deliverablesResponse.data.lastDeliverableId,
+                };
+              } catch (error) {
+                console.error(
+                  `Error fetching deliverables for team ${team.teamId}:`,
+                  error.response?.data || error.message
+                );
+                return { ...team, deliverables: [], lastDeliverableId: null }; // Return empty deliverables on error
+              }
+            })
+          );
+          return { ...project, studentTeams: studentTeamsWithDeliverables };
+        })
+      );
+
+      setProjects(projectsWithDeliverables);
     } catch (error) {
       console.error(
         "Error fetching student dashboard:",
@@ -55,6 +87,10 @@ const StudentDashboard = () => {
     setIsJoinTeamOpen(false);
   };
 
+  const handleLeaveTeamSuccess = () => {
+    fetchProjects();
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Student Dashboard</h1>
@@ -74,39 +110,54 @@ const StudentDashboard = () => {
                 <p style={styles.formator}>
                   Formator: {project.formator || "Unknown"}
                 </p>
-                <div style={styles.buttonGroup}>
-                  {project.isStudentInTeam ? (
-                    <>
-                      <LeaveTeam
-                        projectId={project.projectId}
-                        refreshDashboard={fetchProjects}
-                      />
-                      <SendDeliverable
-                        projectId={project.projectId}
-                        teamId={project.studentTeamId}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() =>
-                          handleOpenCreateTeamForm(project.projectId)
-                        }
-                      >
-                        Create Team
-                      </button>
-                      <button
-                        style={styles.cardButton}
-                        onClick={() =>
-                          handleOpenJoinTeamForm(project.projectId)
-                        }
-                      >
-                        Join Team
-                      </button>
-                    </>
-                  )}
-                </div>
+                {project.isStudentInTeam ? (
+                  <div>
+                    <h4>Your Teams:</h4>
+                    {project.studentTeams.map((team) => (
+                      <div key={team.teamId} style={styles.teamSection}>
+                        <p>Team Name: {team.teamName}</p>
+                        {/* Leave Team Button */}
+                        <LeaveTeam
+                          projectId={project.projectId}
+                          teamId={team.teamId}
+                          onLeaveSuccess={handleLeaveTeamSuccess}
+                        />
+                        {/* Check if the last deliverable's due date has passed */}
+                        {!team.lastDeliverablePassed && (
+                          <SendDeliverable
+                            projectId={project.projectId}
+                            teamId={team.teamId}
+                          />
+                        )}
+                        <button
+                          style={styles.cardButton}
+                          onClick={() =>
+                            navigate(`/deliverables/team/${team.teamId}`)
+                          }
+                        >
+                          View Deliverables
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={styles.buttonGroup}>
+                    <button
+                      style={styles.cardButton}
+                      onClick={() =>
+                        handleOpenCreateTeamForm(project.projectId)
+                      }
+                    >
+                      Create Team
+                    </button>
+                    <button
+                      style={styles.cardButton}
+                      onClick={() => handleOpenJoinTeamForm(project.projectId)}
+                    >
+                      Join Team
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -146,6 +197,12 @@ const styles = {
     fontSize: "14px",
     fontStyle: "italic",
     marginTop: "10px",
+  },
+  teamSection: {
+    marginTop: "10px",
+    padding: "10px",
+    backgroundColor: "#f8f8f8",
+    borderRadius: "5px",
   },
   buttonGroup: { display: "flex", flexDirection: "column", gap: "10px" },
   cardButton: {

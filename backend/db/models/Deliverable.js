@@ -20,18 +20,28 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     submissionLink: {
-      type: DataTypes.STRING,
-      allowNull: true,
+      type: DataTypes.STRING, // Store the link as a string
+      allowNull: true, // Optional field
+      validate: {
+        isUrl: true, // Sequelize built-in URL validation
+      },
     },
     released: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false, // Grades are not released by default
+      defaultValue: false,
+    },
+    lastDeliverable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Default to false
     },
   });
 
   Deliverable.associate = (models) => {
     Deliverable.belongsTo(models.Team, { foreignKey: "teamId", as: "team" });
-    Deliverable.hasMany(models.Grade, { foreignKey: "deliverableId", as: "grades" });
+    Deliverable.hasMany(models.Grade, {
+      foreignKey: "deliverableId",
+      as: "grades",
+    });
     Deliverable.belongsToMany(models.User, {
       through: "DeliverableJury",
       as: "juryMembers",

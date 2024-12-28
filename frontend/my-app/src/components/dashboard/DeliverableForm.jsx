@@ -5,8 +5,21 @@ import api from "../../services/api";
 const DeliverableForm = () => {
   const { state } = useLocation(); // Extract state from navigation
   const { teamId } = state || {}; // Get teamId from the state
-  const [deliverable, setDeliverable] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [submissionLink, setSubmissionLink] = useState("");
+  const [isLastDeliverable, setIsLastDeliverable] = useState(false); // Checkbox for last deliverable
   const navigate = useNavigate();
+
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,12 +27,20 @@ const DeliverableForm = () => {
       alert("Team ID is missing. Cannot submit deliverable.");
       return;
     }
+
+    if (!submissionLink || !isValidUrl(submissionLink)) {
+      alert("Please enter a valid URL for the submission link.");
+      return;
+    }
+
     try {
       const response = await api.post("/deliverables/create", {
-        teamId, // Use teamId from state
-        title: "Deliverable Title", // Replace with actual title input if required
-        description: deliverable,
-        dueDate: new Date().toISOString(),
+        teamId, // Send teamId to backend
+        title,
+        description,
+        dueDate, // Use dueDate as editing deadline
+        submissionLink,
+        isLastDeliverable, // Indicate if this is the last deliverable
       });
       alert(response.data.message || "Deliverable submitted successfully.");
       navigate("/student-dashboard");
@@ -39,13 +60,46 @@ const DeliverableForm = () => {
     <div style={styles.container}>
       <h1 style={styles.heading}>Submit Deliverable</h1>
       <form onSubmit={handleSubmit} style={styles.form}>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter the deliverable title"
+          style={styles.input}
+          required
+        />
         <textarea
-          value={deliverable}
-          onChange={(e) => setDeliverable(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter your deliverable content here..."
           style={styles.textarea}
           required
         />
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          style={styles.input}
+          required
+        />
+        <input
+          type="url"
+          value={submissionLink}
+          onChange={(e) => setSubmissionLink(e.target.value)}
+          placeholder="Enter a submission link"
+          style={styles.input}
+          required
+        />
+        <div style={styles.checkboxContainer}>
+          <label>
+            <input
+              type="checkbox"
+              checked={isLastDeliverable}
+              onChange={() => setIsLastDeliverable(!isLastDeliverable)}
+            />
+            This is the last deliverable
+          </label>
+        </div>
         <button type="submit" style={styles.submitButton}>
           Submit
         </button>
@@ -76,12 +130,23 @@ const styles = {
     flexDirection: "column",
     gap: "15px",
   },
+  input: {
+    width: "100%",
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+  },
   textarea: {
     width: "100%",
     height: "100px",
     padding: "10px",
     border: "1px solid #ccc",
     borderRadius: "5px",
+  },
+  checkboxContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
   },
   submitButton: {
     backgroundColor: "#4a148c",

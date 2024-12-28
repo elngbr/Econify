@@ -9,13 +9,11 @@ const CreateProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const response = await api.post("/projects/create", {
         title,
         description,
       });
-      console.log("Project created:", response.data);
       alert("Project created successfully!");
       navigate("/professor-dashboard");
     } catch (error) {
@@ -38,7 +36,6 @@ const CreateProject = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            placeholder="Enter project title"
           />
         </div>
         <div className="field">
@@ -47,7 +44,6 @@ const CreateProject = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
-            placeholder="Enter project description"
           ></textarea>
         </div>
         <button type="submit" className="submit-button">
