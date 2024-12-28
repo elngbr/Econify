@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../services/api";
-import EditDeliverable from "./EditDeliverable";
 
-const ViewDeliverables = () => {
+const ProfessorViewDeliverables = () => {
   const { teamId } = useParams();
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDeliverable, setSelectedDeliverable] = useState(null);
 
   const fetchDeliverables = async () => {
     try {
@@ -26,16 +24,6 @@ const ViewDeliverables = () => {
   useEffect(() => {
     fetchDeliverables();
   }, [teamId]);
-
-  const handleEdit = (deliverable) => {
-    setSelectedDeliverable(deliverable);
-  };
-
-  const handleDeleteFromState = (deletedId) => {
-    setDeliverables((prevDeliverables) =>
-      prevDeliverables.filter((deliverable) => deliverable.id !== deletedId)
-    );
-  };
 
   return (
     <div style={styles.container}>
@@ -74,27 +62,9 @@ const ViewDeliverables = () => {
                   </a>
                 </p>
               )}
-              {new Date() < new Date(deliverable.dueDate) ? (
-                <button
-                  style={styles.editButton}
-                  onClick={() => handleEdit(deliverable)}
-                >
-                  Edit/Delete
-                </button>
-              ) : (
-                <p style={styles.passedMessage}>Editing Time Passed</p>
-              )}
             </li>
           ))}
         </ul>
-      )}
-      {selectedDeliverable && (
-        <EditDeliverable
-          deliverable={selectedDeliverable}
-          onUpdate={fetchDeliverables}
-          onDelete={handleDeleteFromState}
-          onCancel={() => setSelectedDeliverable(null)}
-        />
       )}
     </div>
   );
@@ -110,16 +80,7 @@ const styles = {
     border: "1px solid #ccc",
     borderRadius: "5px",
   },
-  editButton: {
-    backgroundColor: "#4a148c",
-    color: "#fff",
-    border: "none",
-    padding: "5px 10px",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  passedMessage: { color: "red", fontStyle: "italic" },
   link: { color: "#1e88e5", textDecoration: "underline" },
 };
 
-export default ViewDeliverables;
+export default ProfessorViewDeliverables;

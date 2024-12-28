@@ -59,54 +59,80 @@ const DeliverableForm = () => {
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Submit Deliverable</h1>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter the deliverable title"
-          style={styles.input}
-          required
-        />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter your deliverable content here..."
-          style={styles.textarea}
-          required
-        />
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          style={styles.input}
-          required
-        />
-        <input
-          type="url"
-          value={submissionLink}
-          onChange={(e) => setSubmissionLink(e.target.value)}
-          placeholder="Enter a submission link"
-          style={styles.input}
-          required
-        />
-        <div style={styles.checkboxContainer}>
-          <label>
+      <p style={styles.info}>
+        Provide the details for the deliverable below. <br />
+        <strong>Note:</strong> The <strong>Due Date</strong> determines the last
+        day you can submit, edit, or delete the deliverable. Ensure you set it
+        carefully!
+      </p>
+      <div style={styles.card}>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.field}>
+            <label style={styles.label}>Title</label>
             <input
-              type="checkbox"
-              checked={isLastDeliverable}
-              onChange={() => setIsLastDeliverable(!isLastDeliverable)}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter the deliverable title"
+              style={styles.input}
+              required
             />
-            This is the last deliverable
-          </label>
-        </div>
-        <button type="submit" style={styles.submitButton}>
-          Submit
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter a detailed description..."
+              style={styles.textarea}
+              required
+            />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Due Date</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={styles.input}
+              required
+            />
+            <p style={styles.dueDateInfo}>
+              <em>
+                All actions (submission, editing, deletion) must be completed
+                before this date.
+              </em>
+            </p>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Submission Link</label>
+            <input
+              type="url"
+              value={submissionLink}
+              onChange={(e) => setSubmissionLink(e.target.value)}
+              placeholder="Enter a valid URL"
+              style={styles.input}
+              required
+            />
+          </div>
+          <div style={styles.checkboxContainer}>
+            <label style={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={isLastDeliverable}
+                onChange={() => setIsLastDeliverable(!isLastDeliverable)}
+              />
+              This is the last deliverable
+            </label>
+          </div>
+          <button type="submit" style={styles.submitButton}>
+            Submit Deliverable
+          </button>
+        </form>
+        <button onClick={() => navigate(-1)} style={styles.backButton}>
+          Back to Dashboard
         </button>
-      </form>
-      <button onClick={() => navigate(-1)} style={styles.backButton}>
-        Back to Dashboard
-      </button>
+      </div>
     </div>
   );
 };
@@ -116,55 +142,89 @@ const styles = {
     padding: "20px",
     maxWidth: "600px",
     margin: "0 auto",
-    backgroundColor: "#f3f2fc",
-    borderRadius: "10px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "25px", // Added padding for proper spacing
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
   },
   heading: {
     textAlign: "center",
     color: "#4a148c",
     marginBottom: "20px",
+    fontSize: "24px",
+    fontWeight: "bold",
+  },
+  info: {
+    textAlign: "center",
+    color: "#616161",
+    marginBottom: "20px",
+    fontSize: "14px",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
+    gap: "20px", // Added gap for spacing between inputs
+  },
+  field: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px", // Spacing between label and input
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#4a148c",
   },
   input: {
     width: "100%",
-    padding: "10px",
+    padding: "12px",
     border: "1px solid #ccc",
-    borderRadius: "5px",
+    borderRadius: "8px",
+    fontSize: "16px",
   },
   textarea: {
     width: "100%",
     height: "100px",
-    padding: "10px",
+    padding: "12px",
     border: "1px solid #ccc",
-    borderRadius: "5px",
+    borderRadius: "8px",
+    fontSize: "16px",
+  },
+  dueDateInfo: {
+    color: "#616161",
+    fontSize: "12px",
+    marginTop: "4px",
   },
   checkboxContainer: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
   },
+  checkboxLabel: {
+    fontSize: "14px",
+    color: "#4a148c",
+  },
   submitButton: {
     backgroundColor: "#4a148c",
     color: "#fff",
     border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
+    padding: "12px 16px",
+    borderRadius: "8px",
     cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "16px",
   },
   backButton: {
-    marginTop: "10px",
+    marginTop: "20px",
     backgroundColor: "#616161",
     color: "#fff",
     border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
+    padding: "12px 16px",
+    borderRadius: "8px",
     cursor: "pointer",
-    display: "block",
+    fontWeight: "bold",
+    fontSize: "16px",
     width: "100%",
   },
 };
