@@ -28,18 +28,31 @@ const StudentDashboard = () => {
                 const deliverablesResponse = await api.get(
                   `/deliverables/team/${team.teamId}`
                 );
+                const deliverables =
+                  deliverablesResponse.data.deliverables || [];
+                const lastDeliverable = deliverables.find(
+                  (d) => d.lastDeliverable
+                );
+
                 return {
                   ...team,
-                  deliverables: deliverablesResponse.data.deliverables || [],
-                  lastDeliverableId:
-                    deliverablesResponse.data.lastDeliverableId,
+                  deliverables,
+                  lastDeliverableId: lastDeliverable?.id || null,
+                  lastDeliverablePassed: lastDeliverable
+                    ? new Date() > new Date(lastDeliverable.dueDate)
+                    : false,
                 };
               } catch (error) {
                 console.error(
                   `Error fetching deliverables for team ${team.teamId}:`,
                   error.response?.data || error.message
                 );
-                return { ...team, deliverables: [], lastDeliverableId: null }; // Return empty deliverables on error
+                return {
+                  ...team,
+                  deliverables: [],
+                  lastDeliverableId: null,
+                  lastDeliverablePassed: false,
+                };
               }
             })
           );
@@ -88,7 +101,7 @@ const StudentDashboard = () => {
   };
 
   const handleLeaveTeamSuccess = () => {
-    fetchProjects();
+    fetchProjects(); // Refresh the projects to show "Create" or "Join" buttons
   };
 
   return (
@@ -120,10 +133,10 @@ const StudentDashboard = () => {
                         <LeaveTeam
                           projectId={project.projectId}
                           teamId={team.teamId}
-                          onLeaveSuccess={handleLeaveTeamSuccess}
+                          refreshDashboard={handleLeaveTeamSuccess}
                         />
-                        {/* Check if the last deliverable's due date has passed */}
-                        {!team.lastDeliverablePassed && (
+                        {/* Check if the last deliverable exists */}
+                        {!team.lastDeliverableId && (
                           <SendDeliverable
                             projectId={project.projectId}
                             teamId={team.teamId}

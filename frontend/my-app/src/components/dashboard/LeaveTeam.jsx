@@ -1,12 +1,12 @@
 import React from "react";
 import api from "../../services/api";
 
-const LeaveTeam = ({ projectId, refreshDashboard }) => {
+const LeaveTeam = ({ projectId, teamId, refreshDashboard }) => {
   const handleLeaveTeam = async () => {
     try {
-      const response = await api.post("/teams/leave", { projectId });
+      const response = await api.post("/teams/leave", { projectId, teamId });
       alert(response.data.message || "You have left the team.");
-      refreshDashboard(); // Refresh the project list on success
+      refreshDashboard(); // Refresh the dashboard to update UI
     } catch (error) {
       console.error(
         "Error leaving team:",

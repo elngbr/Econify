@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../services/api";
+import EditDeliverable from "./EditDeliverable";
 
 const ViewDeliverables = () => {
   const { teamId } = useParams();
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDeliverable, setSelectedDeliverable] = useState(null);
 
   const fetchDeliverables = async () => {
     try {
@@ -24,6 +26,15 @@ const ViewDeliverables = () => {
   useEffect(() => {
     fetchDeliverables();
   }, [teamId]);
+
+  const handleEdit = (deliverable) => {
+    setSelectedDeliverable(deliverable);
+  };
+
+  const handleUpdate = () => {
+    setSelectedDeliverable(null);
+    fetchDeliverables();
+  };
 
   return (
     <div style={styles.container}>
@@ -53,11 +64,9 @@ const ViewDeliverables = () => {
               {new Date() < new Date(deliverable.dueDate) ? (
                 <button
                   style={styles.editButton}
-                  onClick={() =>
-                    alert(`Editing Deliverable ${deliverable.title} (not implemented)`)
-                  }
+                  onClick={() => handleEdit(deliverable)}
                 >
-                  Edit
+                  Edit/Delete
                 </button>
               ) : (
                 <p style={styles.passedMessage}>Editing Time Passed</p>
@@ -65,6 +74,13 @@ const ViewDeliverables = () => {
             </li>
           ))}
         </ul>
+      )}
+      {selectedDeliverable && (
+        <EditDeliverable
+          deliverable={selectedDeliverable}
+          onUpdate={handleUpdate}
+          onCancel={() => setSelectedDeliverable(null)}
+        />
       )}
     </div>
   );

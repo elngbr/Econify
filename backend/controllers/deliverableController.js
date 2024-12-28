@@ -296,6 +296,30 @@ const releaseDeliverableGrades = async (req, res) => {
     res.status(500).json({ error: "Server error while releasing grades." });
   }
 };
+const deleteDeliverable = async (req, res) => {
+  try {
+    const { deliverableId } = req.params;
+
+    const deliverable = await Deliverable.findByPk(deliverableId);
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found." });
+    }
+
+    if (new Date() > new Date(deliverable.dueDate)) {
+      return res.status(403).json({
+        error: "Deliverable cannot be deleted as its due date has passed.",
+      });
+    }
+
+    await deliverable.destroy();
+    res.status(200).json({ message: "Deliverable deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting deliverable:", error.message);
+    res.status(500).json({ error: "Server error while deleting deliverable." });
+  }
+};
+
+
 
 module.exports = {
   createDeliverable,
@@ -306,4 +330,5 @@ module.exports = {
   getTeamMembersByDeliverable,
   releaseDeliverableGrades,
   editDeliverable,
+  deleteDeliverable
 };
