@@ -1,4 +1,3 @@
-// db/models/Deliverable.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -30,6 +29,10 @@ module.exports = (sequelize) => {
     released: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    lastDeliverable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Default to false
     },
   });
 

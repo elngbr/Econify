@@ -10,51 +10,36 @@ const { Op } = require("sequelize");
 
 const createDeliverable = async (req, res) => {
   try {
-    const { title, description, dueDate, teamId, submissionLink } = req.body;
-
-    console.log(`Received createDeliverable request with teamId: ${teamId}`);
-    console.log(`Submission Link: ${submissionLink}`);
-
-    // Ensure the submissionLink is provided
-    if (!submissionLink) {
-      return res.status(400).json({
-        error: "Submission link is required.",
-      });
-    }
+    const {
+      title,
+      description,
+      dueDate,
+      teamId,
+      submissionLink,
+      isLastDeliverable,
+    } = req.body;
 
     // Verify the team exists
-    const team = await Team.findByPk(teamId, {
-      include: [{ model: Project, as: "project" }],
-    });
-
+    const team = await Team.findByPk(teamId);
     if (!team) {
-      console.log(`Team with ID ${teamId} not found.`);
       return res.status(404).json({ error: "Team not found." });
     }
 
-    // Ensure the user is part of the team
-    const isUserInTeam = await team.hasStudent(req.user.id);
-    if (!isUserInTeam) {
-      return res.status(403).json({ error: "You do not belong to this team." });
+    if (isLastDeliverable) {
+      // Ensure no other deliverables are marked as the last for this team
+      await Deliverable.update(
+        { lastDeliverable: false },
+        { where: { teamId } }
+      );
     }
 
-    // Check for duplicate deliverables in the same team
-    const existingDeliverable = await Deliverable.findOne({
-      where: { title, teamId },
-    });
-
-    if (existingDeliverable) {
-      return res
-        .status(400)
-        .json({ error: "A deliverable with this title already exists." });
-    }
-
-    // Create deliverable
+    // Create the deliverable
     const deliverable = await Deliverable.create({
       title,
       description,
       dueDate,
       submissionLink,
+      lastDeliverable: isLastDeliverable,
       teamId,
     });
 
@@ -67,12 +52,40 @@ const createDeliverable = async (req, res) => {
   }
 };
 
+const editDeliverable = async (req, res) => {
+  try {
+    const { deliverableId } = req.params;
+    const { title, description, dueDate, submissionLink } = req.body;
+
+    const deliverable = await Deliverable.findByPk(deliverableId);
+    if (!deliverable) {
+      return res.status(404).json({ error: "Deliverable not found." });
+    }
+
+    if (new Date() > new Date(deliverable.dueDate)) {
+      return res.status(403).json({
+        error: "Editing deadline has passed. Deliverable cannot be modified.",
+      });
+    }
+
+    await deliverable.update({ title, description, dueDate, submissionLink });
+
+    res
+      .status(200)
+      .json({ message: "Deliverable updated successfully.", deliverable });
+  } catch (error) {
+    console.error("Error editing deliverable:", error.message);
+    res.status(500).json({ error: "Server error while editing deliverable." });
+  }
+};
+
 const getDeliverablesByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
 
     const deliverables = await Deliverable.findAll({
       where: { teamId },
+      order: [["dueDate", "ASC"]], // Sort by due date
     });
 
     if (!deliverables || deliverables.length === 0) {
@@ -81,7 +94,12 @@ const getDeliverablesByTeam = async (req, res) => {
         .json({ error: "No deliverables found for this team." });
     }
 
-    res.status(200).json({ deliverables });
+    const lastDeliverable = deliverables.find((d) => d.lastDeliverable);
+
+    res.status(200).json({
+      deliverables,
+      lastDeliverableId: lastDeliverable ? lastDeliverable.id : null,
+    });
   } catch (error) {
     console.error("Error fetching deliverables by team:", error.message);
     res.status(500).json({ error: "Error fetching deliverables." });
@@ -287,4 +305,5 @@ module.exports = {
   getDeliverableGrades,
   getTeamMembersByDeliverable,
   releaseDeliverableGrades,
+  editDeliverable,
 };

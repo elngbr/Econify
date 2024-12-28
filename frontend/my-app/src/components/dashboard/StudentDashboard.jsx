@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import CreateTeam from "./CreateTeam";
 import JoinTeam from "./JoinTeam";
@@ -12,10 +13,41 @@ const StudentDashboard = () => {
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false);
 
+  const navigate = useNavigate();
+
   const fetchProjects = async () => {
     try {
       const response = await api.get("/users/student-dashboard");
-      setProjects(response.data.projects || []);
+      const projects = response.data.projects || [];
+
+      const projectsWithDeliverables = await Promise.all(
+        projects.map(async (project) => {
+          const studentTeamsWithDeliverables = await Promise.all(
+            project.studentTeams.map(async (team) => {
+              try {
+                const deliverablesResponse = await api.get(
+                  `/deliverables/team/${team.teamId}`
+                );
+                return {
+                  ...team,
+                  deliverables: deliverablesResponse.data.deliverables || [],
+                  lastDeliverableId:
+                    deliverablesResponse.data.lastDeliverableId,
+                };
+              } catch (error) {
+                console.error(
+                  `Error fetching deliverables for team ${team.teamId}:`,
+                  error.response?.data || error.message
+                );
+                return { ...team, deliverables: [], lastDeliverableId: null }; // Return empty deliverables on error
+              }
+            })
+          );
+          return { ...project, studentTeams: studentTeamsWithDeliverables };
+        })
+      );
+
+      setProjects(projectsWithDeliverables);
     } catch (error) {
       console.error(
         "Error fetching student dashboard:",
@@ -90,11 +122,21 @@ const StudentDashboard = () => {
                           teamId={team.teamId}
                           onLeaveSuccess={handleLeaveTeamSuccess}
                         />
-                        {/* Submit Deliverable Button */}
-                        <SendDeliverable
-                          projectId={project.projectId}
-                          teamId={team.teamId}
-                        />
+                        {/* Check if the last deliverable's due date has passed */}
+                        {!team.lastDeliverablePassed && (
+                          <SendDeliverable
+                            projectId={project.projectId}
+                            teamId={team.teamId}
+                          />
+                        )}
+                        <button
+                          style={styles.cardButton}
+                          onClick={() =>
+                            navigate(`/deliverables/team/${team.teamId}`)
+                          }
+                        >
+                          View Deliverables
+                        </button>
                       </div>
                     ))}
                   </div>

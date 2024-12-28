@@ -8,12 +8,13 @@ const DeliverableForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [submissionLink, setSubmissionLink] = useState(""); // New state for the link
+  const [submissionLink, setSubmissionLink] = useState("");
+  const [isLastDeliverable, setIsLastDeliverable] = useState(false); // Checkbox for last deliverable
   const navigate = useNavigate();
 
   const isValidUrl = (url) => {
     try {
-      new URL(url); // Use the URL constructor for validation
+      new URL(url);
       return true;
     } catch (e) {
       return false;
@@ -27,26 +28,19 @@ const DeliverableForm = () => {
       return;
     }
 
-    if (submissionLink && !isValidUrl(submissionLink)) {
+    if (!submissionLink || !isValidUrl(submissionLink)) {
       alert("Please enter a valid URL for the submission link.");
       return;
     }
 
-    console.log({
-      teamId,
-      title,
-      description,
-      dueDate,
-      submissionLink, // Log the submission link being sent
-    });
-
     try {
       const response = await api.post("/deliverables/create", {
-        teamId, // Use teamId from state
+        teamId, // Send teamId to backend
         title,
         description,
-        dueDate,
-        submissionLink, // Include submission link
+        dueDate, // Use dueDate as editing deadline
+        submissionLink,
+        isLastDeliverable, // Indicate if this is the last deliverable
       });
       alert(response.data.message || "Deliverable submitted successfully.");
       navigate("/student-dashboard");
@@ -94,9 +88,18 @@ const DeliverableForm = () => {
           onChange={(e) => setSubmissionLink(e.target.value)}
           placeholder="Enter a submission link"
           style={styles.input}
-          required // This makes the submissionLink mandatory
+          required
         />
-
+        <div style={styles.checkboxContainer}>
+          <label>
+            <input
+              type="checkbox"
+              checked={isLastDeliverable}
+              onChange={() => setIsLastDeliverable(!isLastDeliverable)}
+            />
+            This is the last deliverable
+          </label>
+        </div>
         <button type="submit" style={styles.submitButton}>
           Submit
         </button>
@@ -139,6 +142,11 @@ const styles = {
     padding: "10px",
     border: "1px solid #ccc",
     borderRadius: "5px",
+  },
+  checkboxContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
   },
   submitButton: {
     backgroundColor: "#4a148c",

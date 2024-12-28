@@ -11,6 +11,10 @@ import PrivateRoute from "./components/auth/PrivateRoute";
 import ProfessorDashboard from "./components/dashboard/ProfessorDashboard";
 import StudentDashboard from "./components/dashboard/StudentDashboard";
 import DeliverableForm from "./components/dashboard/DeliverableForm";
+import ViewDeliverables from "./components/dashboard/ViewDeliverables";
+import CreateProject from "./components/dashboard/CreateProject"; // Create Project Component
+import EditProject from "./components/dashboard/EditProject"; // Edit Project Component
+import ViewTeams from "./components/dashboard/ViewTeams"; // View Teams Component
 
 const App = () => {
   return (
@@ -35,10 +39,42 @@ const App = () => {
           }
         />
         <Route
+          path="/create-project"
+          element={
+            <PrivateRoute role="professor">
+              <CreateProject />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/projects/:id/edit"
+          element={
+            <PrivateRoute role="professor">
+              <EditProject />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/teams"
+          element={
+            <PrivateRoute role="professor">
+              <ViewTeams userRole="professor" />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/deliverables/submit/:projectId"
           element={
             <PrivateRoute role="student">
               <DeliverableForm />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/deliverables/team/:teamId"
+          element={
+            <PrivateRoute role="student">
+              <ViewDeliverables />
             </PrivateRoute>
           }
         />

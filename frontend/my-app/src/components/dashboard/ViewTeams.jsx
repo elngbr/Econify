@@ -4,30 +4,22 @@ import api from "../../services/api";
 import ViewMembers from "./ViewMembers"; // Import the ViewMembers component
 
 const ViewTeams = ({ userRole }) => {
-  const { id: projectId } = useParams();
+  const { projectId } = useParams(); // Use projectId from URL params
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modalData, setModalData] = useState({
-    isVisible: false,
-    message: "",
-    actionType: "", // "deleteTeam"
-    id: null,
-    name: "",
-  });
 
   useEffect(() => {
     const fetchTeams = async () => {
-      if (!projectId) {
-        setError("Invalid project ID.");
-        setLoading(false);
-        return;
-      }
       try {
         const response = await api.get(`/teams/project/${projectId}`);
-        setTeams(response.data.teams || []);
+        if (response.data && response.data.teams) {
+          setTeams(response.data.teams);
+        } else {
+          setError("No teams found for this project.");
+        }
       } catch (err) {
-        console.error("Error fetching teams:", err);
+        console.error("Error fetching teams:", err.response?.data || err.message);
         setError("Failed to load teams. Please try again.");
       } finally {
         setLoading(false);
@@ -37,38 +29,14 @@ const ViewTeams = ({ userRole }) => {
     fetchTeams();
   }, [projectId]);
 
-  const handleDeleteTeam = (teamId, teamName) => {
-    setModalData({
-      isVisible: true,
-      message: `Are you sure you want to delete the team "${teamName}"?`,
-      actionType: "deleteTeam",
-      id: teamId,
-      name: teamName,
-    });
-  };
-
-  const closeModal = () => {
-    setModalData({
-      isVisible: false,
-      message: "",
-      actionType: "",
-      id: null,
-      name: "",
-    });
-  };
-
-  const executeAction = async () => {
+  const handleDeleteTeam = async (teamId) => {
     try {
-      if (modalData.actionType === "deleteTeam") {
-        await api.delete(`/teams/${modalData.id}`);
-        setTeams(teams.filter((team) => team.id !== modalData.id));
-        alert(`Team "${modalData.name}" deleted successfully.`);
-      }
-    } catch (error) {
-      console.error("Error executing action:", error);
-      alert("Failed to execute action. Please try again.");
-    } finally {
-      closeModal();
+      await api.delete(`/teams/${teamId}`);
+      setTeams((prevTeams) => prevTeams.filter((team) => team.id !== teamId));
+      alert("Team deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting team:", err.response?.data || err.message);
+      alert("Failed to delete team. Please try again.");
     }
   };
 
@@ -89,29 +57,13 @@ const ViewTeams = ({ userRole }) => {
               {userRole === "professor" && (
                 <button
                   style={styles.deleteButton}
-                  onClick={() => handleDeleteTeam(team.id, team.name)}
+                  onClick={() => handleDeleteTeam(team.id)}
                 >
                   Delete Team
                 </button>
               )}
             </div>
           ))}
-        </div>
-      )}
-      {/* Confirmation Modal */}
-      {modalData.isVisible && (
-        <div style={styles.modal}>
-          <div style={styles.modalContent}>
-            <p>{modalData.message}</p>
-            <div style={styles.modalActions}>
-              <button style={styles.confirmButton} onClick={executeAction}>
-                Confirm
-              </button>
-              <button style={styles.cancelButton} onClick={closeModal}>
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -163,47 +115,6 @@ const styles = {
     cursor: "pointer",
     fontSize: "14px",
     marginTop: "10px",
-  },
-  modal: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
-    textAlign: "center",
-    width: "300px",
-  },
-  modalActions: {
-    display: "flex",
-    justifyContent: "space-around",
-    marginTop: "10px",
-  },
-  confirmButton: {
-    backgroundColor: "#4caf50",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  cancelButton: {
-    backgroundColor: "#f44336",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "14px",
   },
 };
 

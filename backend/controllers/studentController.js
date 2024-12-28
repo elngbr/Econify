@@ -1,4 +1,4 @@
-const { Project, Team, User } = require("../db/models");
+const { Project, Team, User, Deliverable } = require("../db/models");
 
 const getStudentDashboard = async (req, res) => {
   try {
@@ -14,22 +14,32 @@ const getStudentDashboard = async (req, res) => {
             {
               model: User,
               as: "students",
-              where: { id: studentId }, // Filter teams with the logged-in student
-              required: false, // Include all teams even if the student is not part of them
+              where: { id: studentId },
+              required: false,
+            },
+            {
+              model: Deliverable, // Include deliverables for each team
+              as: "deliverables",
+              attributes: [
+                "id",
+                "title",
+                "description",
+                "dueDate",
+                "lastDeliverable",
+              ],
             },
           ],
         },
         {
           model: User,
-          as: "professor", // Include the professor who created the project
+          as: "professor",
           attributes: ["id", "name", "email"],
         },
       ],
     });
 
-    // Format the projects to include all teams for the student
+    // Format the response
     const formattedProjects = projects.map((project) => {
-      // Get all teams where the student is a member
       const studentTeams = project.teams.filter((team) =>
         team.students.some((student) => student.id === studentId)
       );
@@ -39,11 +49,14 @@ const getStudentDashboard = async (req, res) => {
         projectTitle: project.title,
         projectDescription: project.description,
         formator: project.professor ? project.professor.name : "Unknown",
-        isStudentInTeam: studentTeams.length > 0, // True if the student is part of any team
+        isStudentInTeam: studentTeams.length > 0,
         studentTeams: studentTeams.map((team) => ({
           teamId: team.id,
           teamName: team.name,
-        })), // Array of all teams the student is in
+          deliverables: team.deliverables || [],
+          lastDeliverableId:
+            team.deliverables?.find((d) => d.lastDeliverable)?.id || null,
+        })),
       };
     });
 
