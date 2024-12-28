@@ -5,10 +5,20 @@ import api from "../../services/api";
 const DeliverableForm = () => {
   const { state } = useLocation(); // Extract state from navigation
   const { teamId } = state || {}; // Get teamId from the state
-  const [title, setTitle] = useState(""); // State for the deliverable title
-  const [description, setDescription] = useState(""); // State for the deliverable description
-  const [dueDate, setDueDate] = useState(""); // State for the due date
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [submissionLink, setSubmissionLink] = useState(""); // New state for the link
   const navigate = useNavigate();
+
+  const isValidUrl = (url) => {
+    try {
+      new URL(url); // Use the URL constructor for validation
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,12 +26,27 @@ const DeliverableForm = () => {
       alert("Team ID is missing. Cannot submit deliverable.");
       return;
     }
+
+    if (submissionLink && !isValidUrl(submissionLink)) {
+      alert("Please enter a valid URL for the submission link.");
+      return;
+    }
+
+    console.log({
+      teamId,
+      title,
+      description,
+      dueDate,
+      submissionLink, // Log the submission link being sent
+    });
+
     try {
       const response = await api.post("/deliverables/create", {
         teamId, // Use teamId from state
-        title, // Use the title from input
-        description, // Use the description from input
-        dueDate, // Use the due date from input
+        title,
+        description,
+        dueDate,
+        submissionLink, // Include submission link
       });
       alert(response.data.message || "Deliverable submitted successfully.");
       navigate("/student-dashboard");
@@ -41,7 +66,6 @@ const DeliverableForm = () => {
     <div style={styles.container}>
       <h1 style={styles.heading}>Submit Deliverable</h1>
       <form onSubmit={handleSubmit} style={styles.form}>
-        {/* Input for Deliverable Title */}
         <input
           type="text"
           value={title}
@@ -50,7 +74,6 @@ const DeliverableForm = () => {
           style={styles.input}
           required
         />
-        {/* Textarea for Deliverable Description */}
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -58,7 +81,6 @@ const DeliverableForm = () => {
           style={styles.textarea}
           required
         />
-        {/* Input for Due Date */}
         <input
           type="date"
           value={dueDate}
@@ -66,6 +88,15 @@ const DeliverableForm = () => {
           style={styles.input}
           required
         />
+        <input
+          type="url"
+          value={submissionLink}
+          onChange={(e) => setSubmissionLink(e.target.value)}
+          placeholder="Enter a submission link"
+          style={styles.input}
+          required // This makes the submissionLink mandatory
+        />
+
         <button type="submit" style={styles.submitButton}>
           Submit
         </button>

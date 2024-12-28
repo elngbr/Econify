@@ -10,9 +10,17 @@ const { Op } = require("sequelize");
 
 const createDeliverable = async (req, res) => {
   try {
-    const { title, description, dueDate, teamId } = req.body;
+    const { title, description, dueDate, teamId, submissionLink } = req.body;
 
     console.log(`Received createDeliverable request with teamId: ${teamId}`);
+    console.log(`Submission Link: ${submissionLink}`);
+
+    // Ensure the submissionLink is provided
+    if (!submissionLink) {
+      return res.status(400).json({
+        error: "Submission link is required.",
+      });
+    }
 
     // Verify the team exists
     const team = await Team.findByPk(teamId, {
@@ -46,6 +54,7 @@ const createDeliverable = async (req, res) => {
       title,
       description,
       dueDate,
+      submissionLink,
       teamId,
     });
 
