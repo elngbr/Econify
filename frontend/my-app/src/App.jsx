@@ -12,6 +12,7 @@ import ProfessorDashboard from "./components/dashboard/ProfessorDashboard";
 import StudentDashboard from "./components/dashboard/StudentDashboard";
 import DeliverableForm from "./components/dashboard/DeliverableForm";
 import ViewDeliverables from "./components/dashboard/ViewDeliverables";
+import ProfessorViewDeliverables from "./components/dashboard/ProfessorViewDeliverables"; // Import ProfessorViewDeliverables
 import CreateProject from "./components/dashboard/CreateProject"; // Create Project Component
 import EditProject from "./components/dashboard/EditProject"; // Edit Project Component
 import ViewTeams from "./components/dashboard/ViewTeams"; // View Teams Component
@@ -59,6 +60,14 @@ const App = () => {
           element={
             <PrivateRoute role="professor">
               <ViewTeams userRole="professor" />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/teams/:teamId/deliverables"
+          element={
+            <PrivateRoute role="professor">
+              <ProfessorViewDeliverables />
             </PrivateRoute>
           }
         />

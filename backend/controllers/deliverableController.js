@@ -319,6 +319,41 @@ const deleteDeliverable = async (req, res) => {
   }
 };
 
+const getAllDeliverablesForProfessor = async (req, res) => {
+  try {
+    // Extract professor ID from the token
+    const professorId = req.user.id;
+
+    // Fetch all teams supervised by this professor
+    const teams = await Team.findAll({
+      where: { professorId }, // Only teams under the logged-in professor
+      include: [
+        {
+          model: Deliverable,
+          as: "deliverables",
+          attributes: ["id", "title", "description", "dueDate", "lastDeliverable"],
+        },
+      ],
+    });
+
+    if (!teams || teams.length === 0) {
+      return res.status(404).json({ error: "No deliverables found for your teams." });
+    }
+
+    // Transform data for better readability
+    const results = teams.map((team) => ({
+      teamId: team.id,
+      teamName: team.name,
+      deliverables: team.deliverables,
+    }));
+
+    res.status(200).json({ results });
+  } catch (error) {
+    console.error("Error fetching deliverables for professor:", error.message);
+    res.status(500).json({ error: "Server error while fetching deliverables." });
+  }
+};
+
 
 
 module.exports = {
@@ -330,5 +365,6 @@ module.exports = {
   getTeamMembersByDeliverable,
   releaseDeliverableGrades,
   editDeliverable,
-  deleteDeliverable
+  deleteDeliverable,
+  getAllDeliverablesForProfessor
 };

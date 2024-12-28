@@ -14,6 +14,7 @@ const {
   getTeamMembersByDeliverable,
   releaseDeliverableGrades,
   deleteDeliverable,
+  getAllDeliverablesForProfessor,
 } = require("../controllers/deliverableController");
 
 const router = express.Router();
@@ -37,5 +38,11 @@ router.put(
 );
 router.put("/edit/:deliverableId", verifyToken, isStudent, editDeliverable);
 router.delete("/:deliverableId", verifyToken, isStudent, deleteDeliverable);
+router.get(
+  "/professor/deliverables",
+  verifyToken,
+  isProfessor, // Ensure only professors can access this endpoint
+  getAllDeliverablesForProfessor // Call the new controller function
+);
 
 module.exports = router;
