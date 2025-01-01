@@ -5,6 +5,7 @@ import CreateTeam from "./CreateTeam";
 import JoinTeam from "./JoinTeam";
 import LeaveTeam from "./LeaveTeam";
 import SendDeliverable from "./SendDeliverable";
+import SeeDeliverablesToGrade from "./SeeDeliverablesToGrade"; // Import the new component
 
 const StudentDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -12,6 +13,7 @@ const StudentDashboard = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false);
+  const [showDeliverablesToGrade, setShowDeliverablesToGrade] = useState(false);
 
   const navigate = useNavigate();
 
@@ -87,6 +89,7 @@ const StudentDashboard = () => {
     setIsJoinTeamOpen(true);
   };
 
+  // This function ensures UI updates after joining a team
   const handleJoinSuccess = (updatedTeam) => {
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
@@ -94,19 +97,25 @@ const StudentDashboard = () => {
           return {
             ...project,
             studentTeams: project.studentTeams.map((team) =>
-              team.teamId === updatedTeam.id ? updatedTeam : team
+              team.teamId === updatedTeam.id
+                ? { ...team, isStudentInTeam: true }
+                : team
             ),
           };
         }
         return project;
       })
     );
-    setIsJoinTeamOpen(false); // Close the modal here
+    setIsJoinTeamOpen(false); // Close the modal after joining
   };
 
   const handleCreateSuccess = () => {
     fetchProjects();
     setIsCreateTeamOpen(false);
+  };
+
+  const handleSeeDeliverablesToGrade = () => {
+    setShowDeliverablesToGrade(true);
   };
 
   return (
@@ -128,17 +137,21 @@ const StudentDashboard = () => {
                 <p style={styles.formator}>
                   Formator: {project.formator || "Unknown"}
                 </p>
+
                 {project.isStudentInTeam ? (
                   <div>
                     <h4>Your Teams:</h4>
                     {project.studentTeams.map((team) => (
                       <div key={team.teamId} style={styles.teamSection}>
                         <p>Team Name: {team.teamName}</p>
+
+                        {/* Show the 'Leave Team' and 'View Deliverables' buttons */}
                         <LeaveTeam
                           projectId={project.projectId}
                           teamId={team.teamId}
                           refreshDashboard={() => fetchProjects()}
                         />
+
                         {team.deliverables.length > 0 ||
                         !team.lastDeliverablePassed ? (
                           <SendDeliverable
@@ -183,13 +196,22 @@ const StudentDashboard = () => {
         </div>
       )}
 
+      <button
+        style={styles.cardButton}
+        onClick={handleSeeDeliverablesToGrade}
+      >
+        See Deliverables You Have to Grade
+      </button>
+
+      {showDeliverablesToGrade && <SeeDeliverablesToGrade />}
+
       {isCreateTeamOpen && (
         <CreateTeam projectId={selectedProject} onClose={handleCreateSuccess} />
       )}
       {isJoinTeamOpen && (
         <JoinTeam
           projectId={selectedProject}
-          onClose={() => setIsJoinTeamOpen(false)} // Close the modal here
+          onClose={() => setIsJoinTeamOpen(false)}
           onJoinSuccess={handleJoinSuccess}
         />
       )}

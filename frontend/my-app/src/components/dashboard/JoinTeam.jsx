@@ -43,15 +43,24 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
       const response = await api.post("/teams/join", { teamId });
 
       if (response.status === 200) {
-        // Successfully joined, update UI and close modal
+        // Update UI with updated team data
         onJoinSuccess(response.data.team); // Pass updated team data to parent
-        onClose(); // Close the modal after successful join
+        onClose(); // Close modal after join success
       } else {
         console.error("Failed to join the team:", response.data);
       }
     } catch (error) {
       console.error("Error joining team:", error);
       alert("Error joining team. Please try again.");
+    }
+  };
+
+  const toggleExpandTeam = (teamId) => {
+    if (expandedTeamId === teamId) {
+      setExpandedTeamId(null); // Collapse if already expanded
+    } else {
+      setExpandedTeamId(teamId);
+      fetchTeamMembers(teamId); // Fetch members when expanding
     }
   };
 
