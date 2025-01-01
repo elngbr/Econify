@@ -15,7 +15,7 @@ const ProfessorViewDeliverables = () => {
   const fetchDeliverables = async () => {
     try {
       const response = await api.get(`/deliverables/team/${teamId}`);
-      setDeliverables(response.data.deliverables || []);
+      setDeliverables(response.data.deliverables); // Directly use the response
     } catch (error) {
       console.error(
         "Error fetching deliverables:",

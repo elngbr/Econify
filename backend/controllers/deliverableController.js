@@ -17,6 +17,7 @@ const createDeliverable = async (req, res) => {
       teamId,
       submissionLink,
       isLastDeliverable,
+      projectId, // Add projectId here
     } = req.body;
 
     // Verify the team exists
@@ -41,6 +42,7 @@ const createDeliverable = async (req, res) => {
       submissionLink,
       lastDeliverable: isLastDeliverable,
       teamId,
+      projectId, // Include projectId here
     });
 
     res
@@ -114,22 +116,13 @@ const assignJuryToDeliverable = async (req, res) => {
       include: [{ model: Team, as: "team" }],
     });
 
-    if (!deliverable) {
+    if (!deliverable)
       return res.status(404).json({ error: "Deliverable not found." });
-    }
 
     const teamId = deliverable.team.id;
 
-    // Exclude students who are part of the team
     const potentialJurors = await User.findAll({
-      where: { role: "student" },
-      include: [
-        {
-          model: Team,
-          as: "teams",
-          where: { id: { [Op.ne]: teamId } }, // Exclude current team
-        },
-      ],
+      where: { role: "student", teamId: { [Op.ne]: teamId } },
     });
 
     if (potentialJurors.length < jurySize) {
