@@ -85,9 +85,15 @@ const getDeliverablesByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
 
+    // Check if team exists first
+    const team = await Team.findByPk(teamId);
+    if (!team) {
+      return res.status(404).json({ error: "Team not found." });
+    }
+
     const deliverables = await Deliverable.findAll({
       where: { teamId },
-      order: [["dueDate", "ASC"]], // Sort by due date
+      order: [["dueDate", "ASC"]],
     });
 
     if (!deliverables || deliverables.length === 0) {
@@ -103,7 +109,7 @@ const getDeliverablesByTeam = async (req, res) => {
       lastDeliverableId: lastDeliverable ? lastDeliverable.id : null,
     });
   } catch (error) {
-    console.error("Error fetching deliverables by team:", error.message);
+    console.error("Error fetching deliverables for team:", error.message);
     res.status(500).json({ error: "Error fetching deliverables." });
   }
 };
