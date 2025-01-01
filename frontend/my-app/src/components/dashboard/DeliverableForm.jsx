@@ -4,7 +4,7 @@ import api from "../../services/api";
 
 const DeliverableForm = () => {
   const { state } = useLocation(); // Extract state from navigation
-  const { teamId } = state || {}; // Get teamId from the state
+  const { teamId, projectId } = state || {}; // Get teamId and projectId from the state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -23,8 +23,8 @@ const DeliverableForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!teamId) {
-      alert("Team ID is missing. Cannot submit deliverable.");
+    if (!teamId || !projectId) {
+      alert("Team ID or Project ID is missing. Cannot submit deliverable.");
       return;
     }
 
@@ -36,6 +36,7 @@ const DeliverableForm = () => {
     try {
       const response = await api.post("/deliverables/create", {
         teamId, // Send teamId to backend
+        projectId, // Send projectId to backend
         title,
         description,
         dueDate, // Use dueDate as editing deadline
