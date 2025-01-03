@@ -48,22 +48,20 @@ const joinTeam = async (req, res) => {
     const { teamId } = req.body;
     const userId = req.user.id;
 
+    // Check if teamId is provided
     if (!teamId) {
       return res.status(400).json({ error: "Team ID is required." });
     }
 
-    console.log(`Attempting to join team with ID: ${teamId}`);
-
-    // Find the team and its associated project
     const team = await Team.findByPk(teamId, {
-      include: [{ model: Project, as: "project" }], // Correct alias for Project
+      include: [{ model: Project, as: "project" }],
     });
 
     if (!team) {
       return res.status(404).json({ error: "Team not found." });
     }
 
-    // Check if the user is already in a team for the same project
+    // Check if user is already in a team for the same project
     const existingMembership = await Team.findOne({
       include: [
         {
@@ -74,7 +72,7 @@ const joinTeam = async (req, res) => {
         {
           model: Project,
           as: "project",
-          where: { id: team.projectId }, // Ensure the same project
+          where: { id: team.projectId },
         },
       ],
     });
@@ -85,15 +83,10 @@ const joinTeam = async (req, res) => {
       });
     }
 
-    // Add the user to the team
     const user = await User.findByPk(userId);
-    await team.addStudent(user); // Add association in UserTeams table
+    await team.addStudent(user); // Add user to the team
 
-    console.log(
-      `User with ID: ${userId} successfully joined team with ID: ${teamId}`
-    );
-
-    res.status(200).json({ message: "Successfully joined the team." });
+    res.status(200).json({ message: "Successfully joined the team.", team });
   } catch (error) {
     console.error("Error joining team:", error.message);
     res.status(500).json({ error: "Server error while joining the team." });
@@ -129,27 +122,37 @@ const getTeamsByProject = async (req, res) => {
 
 const leaveTeam = async (req, res) => {
   try {
-    const { projectId } = req.body;
+    const { projectId, teamId } = req.body;
     const userId = req.user.id;
 
-    // Find the user's current team for the project
+    // Find the team the user is part of
     const team = await Team.findOne({
+      where: { id: teamId },
       include: [
-        { model: Project, as: "project", where: { id: projectId } },
-        { model: User, as: "students", where: { id: userId } },
+        {
+          model: Project,
+          as: "project",
+          where: { id: projectId },
+        },
+        {
+          model: User,
+          as: "students",
+          where: { id: userId },
+        },
       ],
     });
 
     if (!team) {
       return res
         .status(404)
-        .json({ error: "You are not part of a team for this project." });
+        .json({ error: "Team not found or user not in the team." });
     }
 
+    // Remove the user from the team
     const user = await User.findByPk(userId);
-    await team.removeStudent(user); // Remove association in UserTeams table
+    await team.removeStudent(user); // This removes the association in the UserTeams table
 
-    res.status(200).json({ message: "You have left the team successfully." });
+    res.status(200).json({ message: "Successfully left the team." });
   } catch (error) {
     console.error("Error leaving team:", error.message);
     res.status(500).json({ error: "Server error while leaving the team." });

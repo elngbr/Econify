@@ -9,11 +9,13 @@ const SendDeliverable = ({ projectId, teamId }) => {
       <button
         style={styles.sendButton}
         onClick={() => {
-          if (!teamId || !projectId) {  // Ensure projectId is included
+          if (!teamId || !projectId) {
             alert("Team ID or Project ID is missing.");
             return;
           }
-          navigate(`/deliverables/submit/${projectId}`, { state: { teamId, projectId } });
+          navigate(`/deliverables/submit/${projectId}`, {
+            state: { teamId, projectId },
+          });
         }}
       >
         Submit Deliverable

@@ -15,6 +15,7 @@ const {
   releaseDeliverableGrades,
   deleteDeliverable,
   getAllDeliverablesForProfessor,
+  getDeliverablesAssignedToStudent, // New function to get student-specific deliverables
 } = require("../controllers/deliverableController");
 
 const router = express.Router();
@@ -41,8 +42,16 @@ router.delete("/:deliverableId", verifyToken, isStudent, deleteDeliverable);
 router.get(
   "/professor/deliverables",
   verifyToken,
-  isProfessor, // Ensure only professors can access this endpoint
-  getAllDeliverablesForProfessor // Call the new controller function
+  isProfessor,
+  getAllDeliverablesForProfessor
+);
+
+// New route for fetching deliverables assigned to a student
+router.get(
+  "/assigned",
+  verifyToken,
+  isStudent,
+  getDeliverablesAssignedToStudent
 );
 
 module.exports = router;

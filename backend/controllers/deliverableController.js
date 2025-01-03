@@ -85,9 +85,15 @@ const getDeliverablesByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
 
+    // Check if team exists first
+    const team = await Team.findByPk(teamId);
+    if (!team) {
+      return res.status(404).json({ error: "Team not found." });
+    }
+
     const deliverables = await Deliverable.findAll({
       where: { teamId },
-      order: [["dueDate", "ASC"]], // Sort by due date
+      order: [["dueDate", "ASC"]],
     });
 
     if (!deliverables || deliverables.length === 0) {
@@ -103,7 +109,7 @@ const getDeliverablesByTeam = async (req, res) => {
       lastDeliverableId: lastDeliverable ? lastDeliverable.id : null,
     });
   } catch (error) {
-    console.error("Error fetching deliverables by team:", error.message);
+    console.error("Error fetching deliverables for team:", error.message);
     res.status(500).json({ error: "Error fetching deliverables." });
   }
 };
@@ -121,8 +127,17 @@ const assignJuryToDeliverable = async (req, res) => {
 
     const teamId = deliverable.team.id;
 
+    // Use the 'UserTeams' join table to find students not in the same team
     const potentialJurors = await User.findAll({
-      where: { role: "student", teamId: { [Op.ne]: teamId } },
+      include: [
+        {
+          model: Team,
+          as: "teams",
+          where: {
+            id: { [Op.ne]: teamId }, // Exclude users in the same team as the deliverable's team
+          },
+        },
+      ],
     });
 
     if (potentialJurors.length < jurySize) {
@@ -131,8 +146,9 @@ const assignJuryToDeliverable = async (req, res) => {
         .json({ error: "Not enough students to assign as jurors." });
     }
 
+    // Randomly select the specified number of jurors
     const selectedJurors = potentialJurors
-      .sort(() => Math.random() - 0.5)
+      .sort(() => Math.random() - 0.5) // Shuffle the array
       .slice(0, jurySize);
 
     const juryAssignments = selectedJurors.map((juror) => ({
@@ -140,6 +156,7 @@ const assignJuryToDeliverable = async (req, res) => {
       deliverableId,
     }));
 
+    // Bulk create jury assignments
     await DeliverableJury.bulkCreate(juryAssignments);
 
     res.status(201).json({
@@ -365,6 +382,72 @@ const getAllDeliverablesForProfessor = async (req, res) => {
       .json({ error: "Server error while fetching deliverables." });
   }
 };
+const getDeliverablesAssignedToStudent = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    // Get all deliverables assigned to the student
+    const juryAssignments = await DeliverableJury.findAll({
+      where: { userId: studentId },
+      include: [
+        {
+          model: Deliverable,
+          as: "deliverable",
+          include: [
+            {
+              model: Team,
+              as: "team",
+              include: [
+                {
+                  model: Project,
+                  as: "project",
+                  attributes: ["id", "title", "userId"], // Include userId to link to professor
+                  include: [
+                    {
+                      model: User,
+                      as: "professor", // Get professor information
+                      attributes: ["id", "name"],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!juryAssignments || juryAssignments.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No deliverables assigned to you." });
+    }
+
+    // Transform the result to only show relevant deliverable details, excluding student data
+    const deliverables = juryAssignments.map((juryAssignment) => {
+      return {
+        deliverableId: juryAssignment.deliverable.id,
+        title: juryAssignment.deliverable.title,
+        description: juryAssignment.deliverable.description,
+        dueDate: juryAssignment.deliverable.dueDate,
+        projectTitle: juryAssignment.deliverable.team.project.title,
+        teamName: juryAssignment.deliverable.team.name,
+        professorName: juryAssignment.deliverable.team.project.professor.name, // Access professor name
+        submissionLink: juryAssignment.deliverable.submissionLink,
+      };
+    });
+
+    res.status(200).json({ deliverables });
+  } catch (error) {
+    console.error(
+      "Error fetching deliverables assigned to student:",
+      error.message
+    );
+    res
+      .status(500)
+      .json({ error: "Server error while fetching deliverables." });
+  }
+};
 
 module.exports = {
   createDeliverable,
@@ -377,4 +460,5 @@ module.exports = {
   editDeliverable,
   deleteDeliverable,
   getAllDeliverablesForProfessor,
+  getDeliverablesAssignedToStudent,
 };

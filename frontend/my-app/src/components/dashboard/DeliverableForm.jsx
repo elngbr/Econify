@@ -4,7 +4,7 @@ import api from "../../services/api";
 
 const DeliverableForm = () => {
   const { state } = useLocation(); // Extract state from navigation
-  const { teamId, projectId } = state || {}; // Get teamId and projectId from the state
+  const { teamId, projectId, lastDeliverablePassed } = state || {}; // Get teamId and projectId from the state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -77,6 +77,7 @@ const DeliverableForm = () => {
               placeholder="Enter the deliverable title"
               style={styles.input}
               required
+              disabled={lastDeliverablePassed} // Disable input if time has passed
             />
           </div>
           <div style={styles.field}>
@@ -87,6 +88,7 @@ const DeliverableForm = () => {
               placeholder="Enter a detailed description..."
               style={styles.textarea}
               required
+              disabled={lastDeliverablePassed} // Disable input if time has passed
             />
           </div>
           <div style={styles.field}>
@@ -97,13 +99,8 @@ const DeliverableForm = () => {
               onChange={(e) => setDueDate(e.target.value)}
               style={styles.input}
               required
+              disabled={lastDeliverablePassed} // Disable input if time has passed
             />
-            <p style={styles.dueDateInfo}>
-              <em>
-                All actions (submission, editing, deletion) must be completed
-                before this date.
-              </em>
-            </p>
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Submission Link</label>
@@ -114,6 +111,7 @@ const DeliverableForm = () => {
               placeholder="Enter a valid URL"
               style={styles.input}
               required
+              disabled={lastDeliverablePassed} // Disable input if time has passed
             />
           </div>
           <div style={styles.checkboxContainer}>
@@ -122,11 +120,16 @@ const DeliverableForm = () => {
                 type="checkbox"
                 checked={isLastDeliverable}
                 onChange={() => setIsLastDeliverable(!isLastDeliverable)}
+                disabled={lastDeliverablePassed} // Disable checkbox if time has passed
               />
               This is the last deliverable
             </label>
           </div>
-          <button type="submit" style={styles.submitButton}>
+          <button
+            type="submit"
+            style={styles.submitButton}
+            disabled={lastDeliverablePassed}
+          >
             Submit Deliverable
           </button>
         </form>

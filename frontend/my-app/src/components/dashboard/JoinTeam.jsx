@@ -35,10 +35,23 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
 
   const handleJoinTeam = async (teamId) => {
     try {
-      await api.post("/teams/join", { teamId });
-      onJoinSuccess(); // Notify parent about successful join
+      if (!teamId) {
+        console.error("Team ID is missing!");
+        return;
+      }
+
+      const response = await api.post("/teams/join", { teamId });
+
+      if (response.status === 200) {
+        // Update UI with updated team data
+        onJoinSuccess(response.data.team); // Pass updated team data to parent
+        onClose(); // Close modal after join success
+      } else {
+        console.error("Failed to join the team:", response.data);
+      }
     } catch (error) {
       console.error("Error joining team:", error);
+      alert("Error joining team. Please try again.");
     }
   };
 
