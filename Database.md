@@ -1,7 +1,7 @@
-![alt text](image.png)
-Let’s double-check all relationships in the given schema:
+![image](https://github.com/user-attachments/assets/70f7798b-784b-4499-b9b6-b0ce6f9e5c2e)
 
-### Comprehensive List of Relationships
+
+
 1. **Users and Teams**:
    - Many-to-Many: A user (student) can belong to multiple teams via the `UserTeams` table.
    - Professors are not part of teams but manage projects.
