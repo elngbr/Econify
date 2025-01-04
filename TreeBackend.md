@@ -1,4 +1,4 @@
-Here's the structure of your **Backend** directory tree:
+
 
 ```bash
 Econify/
@@ -71,5 +71,3 @@ Econify/
    - Provides documentation for setting up and running the backend.
 
 ---
-
-Would you like a **visual tree representation** or a **diagram** for this structure? Let me know!
