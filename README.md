@@ -1,5 +1,10 @@
 # Econify
 Webtech project
+
+
+
+
+
 Template general
 
 [Obiectiv general]
