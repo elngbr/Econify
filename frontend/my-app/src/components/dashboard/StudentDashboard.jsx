@@ -5,7 +5,7 @@ import CreateTeam from "./CreateTeam";
 import JoinTeam from "./JoinTeam";
 import LeaveTeam from "./LeaveTeam";
 import SendDeliverable from "./SendDeliverable";
-import SeeDeliverablesToGrade from "./SeeDeliverablesToGrade"; // Import the new component
+import SeeDeliverablesToGrade from "./SeeDeliverablesToGrade";
 
 const StudentDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -196,14 +196,14 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      <button
+      {/* <button
         style={styles.cardButton}
         onClick={handleSeeDeliverablesToGrade}
       >
         See Deliverables You Have to Grade
       </button>
 
-      {showDeliverablesToGrade && <SeeDeliverablesToGrade />}
+      {showDeliverablesToGrade && <SeeDeliverablesToGrade />} */}
 
       {isCreateTeamOpen && (
         <CreateTeam projectId={selectedProject} onClose={handleCreateSuccess} />

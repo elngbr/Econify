@@ -118,6 +118,7 @@ const assignJuryToDeliverable = async (req, res) => {
   try {
     const { deliverableId, jurySize } = req.body;
 
+    // Fetch deliverable and its team
     const deliverable = await Deliverable.findByPk(deliverableId, {
       include: [{ model: Team, as: "team" }],
     });
@@ -125,30 +126,47 @@ const assignJuryToDeliverable = async (req, res) => {
     if (!deliverable)
       return res.status(404).json({ error: "Deliverable not found." });
 
-    const teamId = deliverable.team.id;
+    if (!deliverable.team)
+      return res
+        .status(400)
+        .json({ error: "Deliverable is not associated with a valid team." });
 
-    // Use the 'UserTeams' join table to find students not in the same team
+    const teamId = deliverable.team.id;
+    console.log("Deliverable Team ID:", teamId);
+
+    // Fetch potential jurors
     const potentialJurors = await User.findAll({
+      where: {
+        role: "student", // Only students
+      },
       include: [
         {
           model: Team,
           as: "teams",
+          through: { attributes: [] }, // Exclude join table attributes
           where: {
-            id: { [Op.ne]: teamId }, // Exclude users in the same team as the deliverable's team
+            id: { [Op.ne]: teamId }, // Exclude same team
           },
+          required: false, // Allow students without any teams
         },
       ],
     });
 
+    console.log(
+      "Potential Jurors Found:",
+      potentialJurors.map((j) => j.name)
+    );
+
     if (potentialJurors.length < jurySize) {
+      console.error("Juror Count:", potentialJurors.length);
       return res
         .status(400)
         .json({ error: "Not enough students to assign as jurors." });
     }
 
-    // Randomly select the specified number of jurors
+    // Select jurors and assign them
     const selectedJurors = potentialJurors
-      .sort(() => Math.random() - 0.5) // Shuffle the array
+      .sort(() => Math.random() - 0.5)
       .slice(0, jurySize);
 
     const juryAssignments = selectedJurors.map((juror) => ({
@@ -156,8 +174,10 @@ const assignJuryToDeliverable = async (req, res) => {
       deliverableId,
     }));
 
-    // Bulk create jury assignments
     await DeliverableJury.bulkCreate(juryAssignments);
+
+    deliverable.isAssigned = true;
+    await deliverable.save();
 
     res.status(201).json({
       message: "Jury assigned successfully.",
@@ -172,10 +192,73 @@ const assignJuryToDeliverable = async (req, res) => {
   }
 };
 
+const getDeliverablesForStudent = async (req, res) => {
+  try {
+    const studentId = req.user.id; // Extract student ID from token
+    const { teamId } = req.params; // Team ID is passed in the request
+
+    // Verify that the student is part of the specified team
+    const team = await Team.findOne({
+      where: { id: teamId },
+      include: {
+        model: User,
+        as: "students",
+        where: { id: studentId },
+      },
+    });
+
+    if (!team) {
+      return res.status(403).json({
+        error: "You are not a member of this team or the team does not exist.",
+      });
+    }
+
+    // Fetch deliverables for the team
+    const deliverables = await Deliverable.findAll({
+      where: { teamId },
+      include: [
+        {
+          model: Grade,
+          as: "grades",
+        },
+      ],
+    });
+
+    if (!deliverables || deliverables.length === 0) {
+      return res.status(404).json({
+        error: "No deliverables found for this team.",
+      });
+    }
+
+    // Map deliverables to include grading status
+    const formattedDeliverables = deliverables.map((deliverable) => ({
+      id: deliverable.id,
+      title: deliverable.title,
+      description: deliverable.description,
+      dueDate: deliverable.dueDate,
+      isAssigned: deliverable.isAssigned,
+      grades: deliverable.grades.map((grade) => ({
+        grade: grade.grade || "Not graded yet",
+        feedback: grade.feedback || "No feedback provided",
+      })),
+    }));
+
+    res.status(200).json({ deliverables: formattedDeliverables });
+  } catch (error) {
+    console.error("Error fetching deliverables for student:", error.message);
+    res
+      .status(500)
+      .json({ error: "Server error while fetching deliverables." });
+  }
+};
+
+module.exports = { getDeliverablesForStudent };
+
 const submitGrade = async (req, res) => {
   try {
     const { deliverableId, grade, feedback } = req.body;
 
+    // Check if the user is authorized to grade this deliverable
     const juryMember = await DeliverableJury.findOne({
       where: { userId: req.user.id, deliverableId },
     });
@@ -186,24 +269,27 @@ const submitGrade = async (req, res) => {
         .json({ error: "You are not authorized to grade this deliverable." });
     }
 
+    // Check if a grade already exists
     const existingGrade = await Grade.findOne({
       where: { userId: req.user.id, deliverableId },
     });
 
     if (existingGrade) {
+      // Update the existing grade
       existingGrade.grade = grade;
       existingGrade.feedback = feedback;
       await existingGrade.save();
+      res.status(200).json({ message: "Grade updated successfully." });
     } else {
+      // Create a new grade entry
       await Grade.create({
         deliverableId,
         userId: req.user.id,
         grade,
         feedback,
       });
+      res.status(201).json({ message: "Grade submitted successfully." });
     }
-
-    res.status(201).json({ message: "Grade submitted successfully." });
   } catch (error) {
     console.error("Error submitting grade:", error.message);
     res.status(500).json({ error: "Server error while submitting grade." });
@@ -401,11 +487,11 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
                 {
                   model: Project,
                   as: "project",
-                  attributes: ["id", "title", "userId"], // Include userId to link to professor
+                  attributes: ["id", "title", "userId"],
                   include: [
                     {
                       model: User,
-                      as: "professor", // Get professor information
+                      as: "professor",
                       attributes: ["id", "name"],
                     },
                   ],
@@ -423,19 +509,34 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
         .json({ error: "No deliverables assigned to you." });
     }
 
-    // Transform the result to only show relevant deliverable details, excluding student data
-    const deliverables = juryAssignments.map((juryAssignment) => {
-      return {
-        deliverableId: juryAssignment.deliverable.id,
-        title: juryAssignment.deliverable.title,
-        description: juryAssignment.deliverable.description,
-        dueDate: juryAssignment.deliverable.dueDate,
-        projectTitle: juryAssignment.deliverable.team.project.title,
-        teamName: juryAssignment.deliverable.team.name,
-        professorName: juryAssignment.deliverable.team.project.professor.name, // Access professor name
-        submissionLink: juryAssignment.deliverable.submissionLink,
-      };
-    });
+    // Transform the result to include grade and feedback
+    const deliverables = await Promise.all(
+      juryAssignments.map(async (juryAssignment) => {
+        const deliverable = juryAssignment.deliverable;
+
+        // Fetch grade and feedback if already submitted
+        const gradeEntry = await Grade.findOne({
+          where: {
+            userId: studentId,
+            deliverableId: deliverable.id,
+          },
+          attributes: ["grade", "feedback"],
+        });
+
+        return {
+          deliverableId: deliverable.id,
+          title: deliverable.title,
+          description: deliverable.description,
+          dueDate: deliverable.dueDate,
+          projectTitle: deliverable.team.project.title,
+          teamName: deliverable.team.name,
+          professorName: deliverable.team.project.professor.name,
+          submissionLink: deliverable.submissionLink,
+          grade: gradeEntry?.grade || "No Grade",
+          feedback: gradeEntry?.feedback || "No Feedback",
+        };
+      })
+    );
 
     res.status(200).json({ deliverables });
   } catch (error) {
@@ -448,8 +549,137 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
       .json({ error: "Server error while fetching deliverables." });
   }
 };
+const checkIfJuryAssigned = async (req, res) => {
+  try {
+    const { deliverableId } = req.params;
+
+    const assignedJury = await DeliverableJury.findOne({
+      where: { deliverableId },
+    });
+
+    if (assignedJury) {
+      return res.status(200).json({ juryAssigned: true });
+    }
+
+    return res.status(200).json({ juryAssigned: false });
+  } catch (error) {
+    console.error("Error checking jury assignment:", error.message);
+    res.status(500).json({ error: "Error checking jury assignment." });
+  }
+};
+const getProfessorGradesForDeliverable = async (req, res) => {
+  try {
+    const { deliverableId } = req.params;
+    const professorId = req.user.id; // Extract professor ID from token
+
+    // Fetch the deliverable along with associated grades and jury members
+    const deliverable = await Deliverable.findOne({
+      where: { id: deliverableId },
+      include: [
+        {
+          model: Team,
+          as: "team",
+          include: [
+            {
+              model: Project,
+              as: "project",
+              attributes: ["id", "title", "userId"], // Validate project ownership
+              where: { userId: professorId }, // Ensure the professor owns this project
+            },
+          ],
+        },
+        {
+          model: Grade,
+          as: "grades", // Correct alias for Grade
+          include: [
+            {
+              model: User,
+              as: "juryMember", // Correct alias for User in Grade model
+              attributes: ["id", "name", "email"], // Fetch jury member details
+            },
+          ],
+        },
+      ],
+    });
+
+    // Check if the deliverable exists and is associated with the professor's project
+    if (!deliverable) {
+      return res
+        .status(404)
+        .json({ error: "Deliverable not found or unauthorized access." });
+    }
+
+    // Send the grades and associated jury members
+    res.status(200).json({ grades: deliverable.grades });
+  } catch (error) {
+    console.error("Error fetching grades for professor:", error.message);
+    res.status(500).json({ error: "Server error while fetching grades." });
+  }
+};
+const getStudentGradesForDeliverable = async (req, res) => {
+  try {
+    const { deliverableId } = req.params; // Deliverable ID from the request params
+    const studentId = req.user.id; // Extract student ID from the authenticated user
+
+    // Fetch the deliverable along with its team and grades
+    const deliverable = await Deliverable.findOne({
+      where: { id: deliverableId },
+      include: [
+        {
+          model: Team,
+          as: "team",
+          include: [
+            {
+              model: User,
+              as: "students",
+              where: { id: studentId }, // Ensure the student is part of the team
+              attributes: ["id", "name"], // Fetch student details
+            },
+          ],
+        },
+        {
+          model: Grade,
+          as: "grades",
+          include: [
+            {
+              model: User,
+              as: "juryMember", // Include jury member details
+              attributes: ["id", "name", "email"],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Check if the deliverable exists and the student is authorized
+    if (!deliverable) {
+      return res.status(404).json({
+        error: "Deliverable not found or you are not authorized to view it.",
+      });
+    }
+
+    // Return the grades
+    res.status(200).json({
+      deliverableId: deliverable.id,
+      deliverableTitle: deliverable.title,
+      grades: deliverable.grades.map((grade) => ({
+        juryMember: grade.juryMember.name,
+        grade: grade.grade || "Not graded yet",
+        feedback: grade.feedback || "No feedback provided",
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching grades for student:", error.message);
+    res
+      .status(500)
+      .json({ error: "Server error while fetching deliverable grades." });
+  }
+};
 
 module.exports = {
+  getStudentGradesForDeliverable,
+  getProfessorGradesForDeliverable,
+  checkIfJuryAssigned,
   createDeliverable,
   getDeliverablesByTeam,
   assignJuryToDeliverable,

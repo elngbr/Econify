@@ -4,10 +4,13 @@ const { Team, Project, User } = require("../db/models");
 const createTeam = async (req, res) => {
   try {
     const { name, projectId } = req.body;
+
+    // Ensure only students can create teams
     if (req.user.role !== "student") {
       return res.status(403).json({ error: "Only students can create teams." });
     }
 
+    // Check if the project exists
     const project = await Project.findByPk(projectId);
     if (!project) {
       return res.status(404).json({ error: "Project not found." });
@@ -25,17 +28,25 @@ const createTeam = async (req, res) => {
         .json({ error: "You are already part of a team for this project." });
     }
 
+    // Check if the team name already exists for the project
     const duplicateTeam = await Team.findOne({ where: { name, projectId } });
     if (duplicateTeam) {
       return res.status(400).json({ error: "Team name already exists." });
     }
 
+    // Create the team
     const team = await Team.create({ name, projectId });
-    const user = await User.findByPk(req.user.id);
-    user.teamId = team.id;
-    await user.save();
 
-    res.status(201).json({ message: "Team created successfully.", team });
+    // Add the user who created the team to the team
+    const user = await User.findByPk(req.user.id);
+    await team.addStudent(user); // Use Sequelize's addStudent method
+
+    res
+      .status(201)
+      .json({
+        message: "Team created successfully, and you are now part of it.",
+        team,
+      });
   } catch (error) {
     console.error("Error creating team:", error.message);
     res.status(500).json({ error: "Server error while creating team." });
@@ -202,16 +213,33 @@ const getTeamMembers = async (req, res) => {
 // Controller to remove a member from a team
 const removeUserFromTeam = async (req, res) => {
   try {
-    const { userId } = req.body;
-    const user = await User.findByPk(userId);
-    if (!user || !user.teamId) {
-      return res
-        .status(404)
-        .json({ error: "User not found or not in a team." });
+    const { teamId, userId } = req.body;
+
+    // Check if the team exists
+    const team = await Team.findByPk(teamId);
+    if (!team) {
+      return res.status(404).json({ error: "Team not found." });
     }
-    user.teamId = null; // Remove user from the team
-    await user.save();
-    res.json({ message: "User removed from the team successfully." });
+
+    // Check if the user is part of the team
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const isMember = await team.hasStudent(user);
+    if (!isMember) {
+      return res
+        .status(400)
+        .json({ error: "User is not a member of this team." });
+    }
+
+    // Remove the user from the team
+    await team.removeStudent(user);
+
+    res.json({
+      message: `User ${userId} removed from team ${team.id} successfully.`,
+    });
   } catch (error) {
     console.error("Error removing user from team:", error.message);
     res

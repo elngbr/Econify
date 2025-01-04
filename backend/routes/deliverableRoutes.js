@@ -5,6 +5,8 @@ const {
   isProfessor,
 } = require("../middlewares/authMiddleware");
 const {
+  getProfessorGradesForDeliverable,
+  getStudentGradesForDeliverable,
   createDeliverable,
   getDeliverablesByTeam,
   assignJuryToDeliverable,
@@ -45,6 +47,12 @@ router.get(
   isProfessor,
   getAllDeliverablesForProfessor
 );
+// router.get(
+//   "/:deliverableId/jury-assigned",
+//   verifyToken,
+//   isProfessor,
+//   checkIfJuryAssigned
+// );
 
 // New route for fetching deliverables assigned to a student
 router.get(
@@ -52,6 +60,18 @@ router.get(
   verifyToken,
   isStudent,
   getDeliverablesAssignedToStudent
+);
+router.get(
+  "/:deliverableId/professor-grades",
+  verifyToken,
+  isProfessor,
+  getProfessorGradesForDeliverable
+);
+router.get(
+  "/:deliverableId/student-grades",
+  verifyToken,
+  isStudent,
+  getStudentGradesForDeliverable
 );
 
 module.exports = router;

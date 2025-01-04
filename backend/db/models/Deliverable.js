@@ -34,6 +34,10 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false, // Default to false
     },
+    isAssigned: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Default to false (not assigned)
+    },
   });
 
   Deliverable.associate = (models) => {

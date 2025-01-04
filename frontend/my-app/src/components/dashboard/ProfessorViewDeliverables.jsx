@@ -6,16 +6,13 @@ const ProfessorViewDeliverables = () => {
   const { teamId } = useParams();
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modalData, setModalData] = useState({
-    isVisible: false,
-    deliverableId: null,
-    jurorCount: "",
-  });
+  const [grades, setGrades] = useState({}); // Store grades for each deliverable
 
+  // Fetch deliverables for the team
   const fetchDeliverables = async () => {
     try {
       const response = await api.get(`/deliverables/team/${teamId}`);
-      setDeliverables(response.data.deliverables); // Directly use the response
+      setDeliverables(response.data.deliverables);
     } catch (error) {
       console.error(
         "Error fetching deliverables:",
@@ -26,40 +23,50 @@ const ProfessorViewDeliverables = () => {
     }
   };
 
-  useEffect(() => {
-    fetchDeliverables();
-  }, [teamId]);
-
-  const openModal = (deliverableId) => {
-    setModalData({
-      isVisible: true,
-      deliverableId,
-      jurorCount: "",
-    });
+  const fetchGrades = async (deliverableId) => {
+    try {
+      const response = await api.get(
+        `/deliverables/${deliverableId}/professor-grades`
+      );
+      console.log(
+        "Grades fetched for deliverable:",
+        deliverableId,
+        response.data.grades
+      );
+      setGrades((prevGrades) => ({
+        ...prevGrades,
+        [deliverableId]: response.data.grades,
+      }));
+    } catch (error) {
+      console.error(
+        "Error fetching grades for deliverable:",
+        error.response?.data || error.message
+      );
+    }
   };
 
-  const closeModal = () => {
-    setModalData({
-      isVisible: false,
-      deliverableId: null,
-      jurorCount: "",
-    });
-  };
-
-  const handleAssignJury = async () => {
-    const { deliverableId, jurorCount } = modalData;
-    if (!jurorCount || isNaN(jurorCount) || parseInt(jurorCount) <= 0) {
-      alert("Please enter a valid number of jurors.");
+  const assignJury = async (deliverableId) => {
+    const jurySize = prompt("Enter the number of jurors to assign:");
+    if (!jurySize || isNaN(jurySize) || parseInt(jurySize) <= 0) {
+      alert("Please enter a valid number.");
       return;
     }
 
     try {
       const response = await api.post("/deliverables/assign-jury", {
         deliverableId,
-        jurySize: parseInt(jurorCount),
+        jurySize: parseInt(jurySize),
       });
       alert(response.data.message || "Jury assigned successfully.");
-      closeModal();
+
+      // Update deliverable's isAssigned status
+      setDeliverables((prevDeliverables) =>
+        prevDeliverables.map((deliverable) =>
+          deliverable.id === deliverableId
+            ? { ...deliverable, isAssigned: true }
+            : deliverable
+        )
+      );
     } catch (error) {
       console.error(
         "Error assigning jury:",
@@ -68,6 +75,10 @@ const ProfessorViewDeliverables = () => {
       alert("Failed to assign jury. Please try again.");
     }
   };
+
+  useEffect(() => {
+    fetchDeliverables();
+  }, [teamId]);
 
   return (
     <div style={styles.container}>
@@ -79,67 +90,62 @@ const ProfessorViewDeliverables = () => {
       ) : (
         <ul style={styles.list}>
           {deliverables.map((deliverable) => (
-            <li
-              key={deliverable.id}
-              style={{
-                ...styles.listItem,
-                backgroundColor: deliverable.lastDeliverable
-                  ? "#fce4ec"
-                  : "#fff",
-              }}
-            >
-              <h3>
-                {deliverable.title}
-                {deliverable.lastDeliverable && " (Last Deliverable)"}
-              </h3>
+            <li key={deliverable.id} style={styles.listItem}>
+              <h3>{deliverable.title}</h3>
               <p>{deliverable.description}</p>
               <p>Due Date: {new Date(deliverable.dueDate).toLocaleString()}</p>
-              {deliverable.submissionLink && (
-                <p>
-                  <a
-                    href={deliverable.submissionLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={styles.link}
-                  >
-                    View Submission
-                  </a>
-                </p>
+
+              {/* Display jury status */}
+              <p>
+                Jury Status:{" "}
+                <strong>
+                  {deliverable.isAssigned
+                    ? "It has been assigned a jury."
+                    : "It has not been assigned a jury."}
+                </strong>
+              </p>
+
+              {/* Conditionally render Assign Jury Button */}
+              {!deliverable.isAssigned && (
+                <button
+                  style={styles.button}
+                  onClick={() => assignJury(deliverable.id)}
+                >
+                  Assign Jury
+                </button>
               )}
+
+              {/* See Grades Button */}
               <button
-                style={styles.juryButton}
-                onClick={() => openModal(deliverable.id)}
+                style={styles.button}
+                onClick={() => fetchGrades(deliverable.id)}
               >
-                Assign Anonymous Jury
+                See Grades
               </button>
+
+              {/* Show grades if available */}
+              {grades[deliverable.id] && grades[deliverable.id].length > 0 && (
+                <div style={styles.gradeSection}>
+                  <h4>Grades:</h4>
+                  {grades[deliverable.id].map((grade, index) => (
+                    <div key={index} style={styles.gradeItem}>
+                      <p>Grade: {grade.grade || "Not graded yet"}</p>
+                      <p>
+                        Feedback: {grade.feedback || "No feedback provided"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Show message if grades are not available */}
+              {grades[deliverable.id] &&
+                grades[deliverable.id].length === 0 && (
+                  <p>No grades submitted yet.</p>
+                )}
             </li>
           ))}
         </ul>
-      )}
-
-      {modalData.isVisible && (
-        <div style={styles.modal}>
-          <div style={styles.modalContent}>
-            <h2>Assign Anonymous Jury</h2>
-            <p>Enter the number of jurors to assign for this deliverable:</p>
-            <input
-              type="number"
-              value={modalData.jurorCount}
-              onChange={(e) =>
-                setModalData({ ...modalData, jurorCount: e.target.value })
-              }
-              style={styles.input}
-            />
-            <div style={styles.modalActions}>
-              <button style={styles.confirmButton} onClick={handleAssignJury}>
-                Confirm
-              </button>
-              <button style={styles.cancelButton} onClick={closeModal}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -149,67 +155,22 @@ const styles = {
   container: { padding: "20px" },
   heading: { textAlign: "center", color: "#4a148c", marginBottom: "20px" },
   list: { listStyle: "none", padding: 0 },
-  listItem: {
-    marginBottom: "15px",
-    padding: "15px",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-  },
-  link: { color: "#1e88e5", textDecoration: "underline" },
-  juryButton: {
+  listItem: { marginBottom: "15px", padding: "15px", border: "1px solid #ccc" },
+  button: {
     backgroundColor: "#4a148c",
     color: "#fff",
     border: "none",
-    padding: "10px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  modal: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
-    textAlign: "center",
-    width: "300px",
-  },
-  modalActions: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: "10px",
-  },
-  confirmButton: {
-    backgroundColor: "#4caf50",
-    color: "#fff",
-    border: "none",
     padding: "10px 15px",
     borderRadius: "5px",
     cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "5px",
   },
-  cancelButton: {
-    backgroundColor: "#f44336",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  input: {
-    width: "80%",
-    padding: "10px",
-    margin: "10px 0",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
+  gradeSection: { marginTop: "10px" },
+  gradeItem: {
+    marginBottom: "10px",
+    padding: "5px",
+    backgroundColor: "#f0f0f0",
   },
 };
 

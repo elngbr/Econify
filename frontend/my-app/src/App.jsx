@@ -14,7 +14,9 @@ import CreateProject from "./components/dashboard/CreateProject";
 import EditProject from "./components/dashboard/EditProject";
 import ViewTeams from "./components/dashboard/ViewTeams";
 import Footer from "./pages/Footer";
+import Navbar from "./pages/Navbar"; // Import Navbar
 import NotFound from "./pages/NotFound"; // Import NotFound page
+import SeeDeliverablesToGrade from "./components/dashboard/SeeDeliverablesToGrade";
 
 const App = () => {
   return (
@@ -22,6 +24,7 @@ const App = () => {
       <div
         style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
       >
+        <Navbar /> {/* Add the Navbar here */}
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<Home />} /> {/* Home Page Route */}
@@ -40,6 +43,14 @@ const App = () => {
               element={
                 <PrivateRoute role="student">
                   <StudentDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="deliverables/assigned"
+              element={
+                <PrivateRoute role="student">
+                  <SeeDeliverablesToGrade />
                 </PrivateRoute>
               }
             />
@@ -95,7 +106,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
-        <Footer />
+        <Footer /> {/* Footer remains at the bottom */}
       </div>
     </Router>
   );
