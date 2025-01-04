@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const { sequelize } = require("./db/models"); // Import sequelize from models
+const { sequelize } = require("./db/models"); 
 const cors = require("cors");
 
 // Import the user routes

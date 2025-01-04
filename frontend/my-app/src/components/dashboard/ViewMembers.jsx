@@ -42,10 +42,12 @@ const ViewMembers = ({ teamId, userRole }) => {
       memberName: "",
     });
   };
-
   const handleRemoveMember = async () => {
     try {
-      await api.post("/teams/remove-user", { userId: modalData.memberId });
+      await api.post("/teams/remove-user", {
+        teamId,
+        userId: modalData.memberId,
+      });
       setMembers(members.filter((member) => member.id !== modalData.memberId));
       alert(`User "${modalData.memberName}" removed successfully.`);
     } catch (error) {

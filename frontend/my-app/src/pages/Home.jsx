@@ -30,17 +30,28 @@ const Home = () => {
             grading for projects, ensuring fairness and transparency in academic
             evaluation.
           </p>
+
           <p style={styles.cardText}>
             Professors can create projects and enable anonymous juries to grade
             deliverables, while students can collaborate and showcase their work
             seamlessly.
           </p>
         </div>
+
         <div style={styles.card}>
+          <h2 style={styles.cardTitle}>Why Econify?</h2>
+          <p style={styles.cardText}>
+            Econify: Revolutionizing the grading process with anonymity and
+            fairness. Professors assign juries instead of grading directly,
+            ensuring no one - students or jurors - knows who is grading or being
+            graded. It’s a seamless, unbiased, and anonymous system that fosters
+            trust and humility in education.
+          </p>
           <h2 style={styles.cardTitle}>How It Works</h2>
           <ul style={styles.steps}>
             <li>
-              <strong>1.</strong> Professors create projects and assign teams.
+              <strong>1.</strong> Professors create projects and assign anonzmus
+              jurors for the deliverables of each team in a project.
             </li>
             <li>
               <strong>2.</strong> Students submit deliverables for evaluation.

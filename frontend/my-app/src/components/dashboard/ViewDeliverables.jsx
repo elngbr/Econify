@@ -8,6 +8,7 @@ const ViewDeliverables = () => {
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
+  const [grades, setGrades] = useState({}); // Store grades for each deliverable
 
   const fetchDeliverables = async () => {
     try {
@@ -20,6 +21,24 @@ const ViewDeliverables = () => {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGrades = async (deliverableId) => {
+    try {
+      const response = await api.get(
+        `/deliverables/${deliverableId}/student-grades`
+      );
+      setGrades((prevGrades) => ({
+        ...prevGrades,
+        [deliverableId]: response.data.grades,
+      }));
+    } catch (error) {
+      console.error(
+        "Error fetching grades:",
+        error.response?.data || error.message
+      );
+      alert("Failed to fetch grades. Please try again.");
     }
   };
 
@@ -84,6 +103,28 @@ const ViewDeliverables = () => {
               ) : (
                 <p style={styles.passedMessage}>Editing Time Passed</p>
               )}
+              <button
+                style={styles.gradeButton}
+                onClick={() => fetchGrades(deliverable.id)}
+              >
+                See Grades
+              </button>
+              {/* Show grades if fetched */}
+              {grades[deliverable.id] && (
+                <div style={styles.gradeSection}>
+                  <h4>Grades:</h4>
+                  {grades[deliverable.id].length > 0 ? (
+                    grades[deliverable.id].map((grade, index) => (
+                      <div key={index} style={styles.gradeItem}>
+                        <p>Grade: {grade.grade}</p>
+                        <p>Feedback: {grade.feedback}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No grades available for this deliverable yet.</p>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -118,8 +159,28 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
   },
+  gradeButton: {
+    backgroundColor: "#1e88e5",
+    color: "#fff",
+    border: "none",
+    padding: "5px 10px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginLeft: "10px",
+  },
   passedMessage: { color: "red", fontStyle: "italic" },
   link: { color: "#1e88e5", textDecoration: "underline" },
+  gradeSection: {
+    marginTop: "10px",
+    backgroundColor: "#f9f9f9",
+    padding: "10px",
+    borderRadius: "5px",
+  },
+  gradeItem: {
+    marginBottom: "10px",
+    padding: "5px",
+    backgroundColor: "#f0f0f0",
+  },
 };
 
 export default ViewDeliverables;
