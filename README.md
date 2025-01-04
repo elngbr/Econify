@@ -1,7 +1,5 @@
 # Econify
 Webtech project
-ERD DIAGRAM DATABASE
-![image](https://github.com/user-attachments/assets/16426da5-d944-4b41-a505-021364212ff0)
 
 
 
