@@ -32,6 +32,7 @@ const StudentDashboard = () => {
                 );
                 const deliverables =
                   deliverablesResponse.data.deliverables || [];
+
                 const lastDeliverable = deliverables.find(
                   (d) => d.lastDeliverable
                 );
@@ -40,7 +41,7 @@ const StudentDashboard = () => {
 
                 return {
                   ...team,
-                  deliverables,
+                  deliverables, // Ensure deliverables is always an array
                   lastDeliverableId: lastDeliverable?.id || null,
                   lastDeliverablePassed: lastDeliverable
                     ? new Date(lastDeliverable.dueDate) < currentDate
@@ -53,7 +54,7 @@ const StudentDashboard = () => {
                 );
                 return {
                   ...team,
-                  deliverables: [],
+                  deliverables: [], // Default to an empty array on error
                   lastDeliverableId: null,
                   lastDeliverablePassed: false,
                 };
@@ -94,19 +95,24 @@ const StudentDashboard = () => {
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
         if (project.projectId === selectedProject) {
+          // Add the joined team to the studentTeams array
+          const updatedStudentTeams = [
+            ...project.studentTeams,
+            { teamId: updatedTeam.id, teamName: updatedTeam.name },
+          ];
+
           return {
             ...project,
-            studentTeams: project.studentTeams.map((team) =>
-              team.teamId === updatedTeam.id
-                ? { ...team, isStudentInTeam: true }
-                : team
-            ),
+            studentTeams: updatedStudentTeams,
+            isStudentInTeam: true, // Update the project-level flag
           };
         }
         return project;
       })
     );
-    setIsJoinTeamOpen(false); // Close the modal after joining
+
+    // Close the join team modal
+    setIsJoinTeamOpen(false);
   };
 
   const handleCreateSuccess = () => {
@@ -152,7 +158,7 @@ const StudentDashboard = () => {
                           refreshDashboard={() => fetchProjects()}
                         />
 
-                        {team.deliverables.length > 0 ||
+                        {team.deliverables?.length > 0 ||
                         !team.lastDeliverablePassed ? (
                           <SendDeliverable
                             projectId={project.projectId}

@@ -2,15 +2,19 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 
 const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
-  const [teams, setTeams] = useState([]); // List of teams
-  const [loading, setLoading] = useState(true); // Loading state
-  const [expandedTeamId, setExpandedTeamId] = useState(null); // Track expanded team for member view
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedTeamId, setExpandedTeamId] = useState(null);
 
   useEffect(() => {
     const fetchTeams = async () => {
       try {
         const response = await api.get(`/teams/project/${projectId}`);
-        setTeams(response.data.teams || []);
+        const fetchedTeams = response.data.teams.map((team) => ({
+          ...team,
+          isJoined: false,
+        }));
+        setTeams(fetchedTeams || []);
       } catch (error) {
         console.error("Error fetching teams:", error);
       } finally {
@@ -21,19 +25,7 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
     fetchTeams();
   }, [projectId]);
 
-  const fetchTeamMembers = async (teamId) => {
-    try {
-      const response = await api.get(`/teams/${teamId}/members`);
-      const updatedTeams = teams.map((team) =>
-        team.id === teamId ? { ...team, members: response.data.members } : team
-      );
-      setTeams(updatedTeams);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-    }
-  };
-
-  const handleJoinTeam = async (teamId) => {
+  const handleJoinTeam = async (teamId, teamName) => {
     try {
       if (!teamId) {
         console.error("Team ID is missing!");
@@ -43,9 +35,19 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
       const response = await api.post("/teams/join", { teamId });
 
       if (response.status === 200) {
-        // Update UI with updated team data
-        onJoinSuccess(response.data.team); // Pass updated team data to parent
-        onClose(); // Close modal after join success
+        const updatedTeams = teams.map((team) =>
+          team.id === teamId ? { ...team, isJoined: true } : team
+        );
+        setTeams(updatedTeams);
+
+        alert(`Successfully joined the team: ${teamName || "Unnamed Team"}`);
+
+        if (onJoinSuccess) {
+          onJoinSuccess({
+            id: teamId,
+            name: response.data.team.name,
+          });
+        }
       } else {
         console.error("Failed to join the team:", response.data);
       }
@@ -57,10 +59,9 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
 
   const toggleExpandTeam = (teamId) => {
     if (expandedTeamId === teamId) {
-      setExpandedTeamId(null); // Collapse if already expanded
+      setExpandedTeamId(null);
     } else {
       setExpandedTeamId(teamId);
-      fetchTeamMembers(teamId); // Fetch members when expanding
     }
   };
 
@@ -104,10 +105,14 @@ const JoinTeam = ({ projectId, onClose, onJoinSuccess }) => {
                   </div>
                 )}
                 <button
-                  style={styles.joinButton}
-                  onClick={() => handleJoinTeam(team.id)}
+                  style={{
+                    ...styles.joinButton,
+                    ...(team.isJoined && styles.disabledButton),
+                  }}
+                  onClick={() => handleJoinTeam(team.id, team.name)}
+                  disabled={team.isJoined}
                 >
-                  Join Team
+                  {team.isJoined ? "Joined" : "Join Team"}
                 </button>
               </li>
             ))}
@@ -179,6 +184,11 @@ const styles = {
     padding: "5px 10px",
     borderRadius: "5px",
     cursor: "pointer",
+  },
+  disabledButton: {
+    backgroundColor: "#d3d3d3",
+    color: "#808080",
+    cursor: "not-allowed",
   },
   closeButton: {
     backgroundColor: "#616161",

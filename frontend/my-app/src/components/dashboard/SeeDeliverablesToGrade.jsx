@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
-import "./SeeDeliverablesToGrade.css"; // Import the CSS file
+import "./SeeDeliverablesToGrade.css";
 
 const SeeDeliverablesToGrade = () => {
   const [deliverables, setDeliverables] = useState([]);
@@ -93,17 +93,16 @@ const SeeDeliverablesToGrade = () => {
           {currentDeliverables.map((deliverable) => (
             <div key={deliverable.deliverableId} className="deliverable-card">
               <h3 className="deliverable-title">{deliverable.title}</h3>
-              <p className="deliverable-info">{deliverable.description}</p>
+              <p className="deliverable-description">
+                {deliverable.description || "No description provided."}
+              </p>
               <p className="deliverable-info">
                 Due Date: {new Date(deliverable.dueDate).toLocaleDateString()}
               </p>
               <p className="deliverable-info">
                 Project: {deliverable.projectTitle}
               </p>
-              <p className="deliverable-info">Team: {deliverable.teamName}</p>
-              <p className="deliverable-info">
-                Professor: {deliverable.professorName}
-              </p>
+
               <p className="deliverable-info">
                 Submission Link:{" "}
                 <a
