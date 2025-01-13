@@ -6,9 +6,10 @@ const ProfessorViewDeliverables = () => {
   const { teamId } = useParams();
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [grades, setGrades] = useState({}); // Store grades for each deliverable
+  const [grades, setGrades] = useState({});
+  const [currentPage, setCurrentPage] = useState(1); // Track current page
+  const [itemsPerPage] = useState(5); // Items per page
 
-  // Fetch deliverables for the team
   const fetchDeliverables = async () => {
     try {
       const response = await api.get(`/deliverables/team/${teamId}`);
@@ -59,7 +60,6 @@ const ProfessorViewDeliverables = () => {
       });
       alert(response.data.message || "Jury assigned successfully.");
 
-      // Update deliverable's isAssigned status
       setDeliverables((prevDeliverables) =>
         prevDeliverables.map((deliverable) =>
           deliverable.id === deliverableId
@@ -80,6 +80,27 @@ const ProfessorViewDeliverables = () => {
     fetchDeliverables();
   }, [teamId]);
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDeliverables = deliverables.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(deliverables.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Deliverables</h1>
@@ -88,64 +109,80 @@ const ProfessorViewDeliverables = () => {
       ) : deliverables.length === 0 ? (
         <p>No deliverables found for this team.</p>
       ) : (
-        <ul style={styles.list}>
-          {deliverables.map((deliverable) => (
-            <li key={deliverable.id} style={styles.listItem}>
-              <h3>{deliverable.title}</h3>
-              <p>{deliverable.description}</p>
-              <p>Due Date: {new Date(deliverable.dueDate).toLocaleString()}</p>
-
-              {/* Display jury status */}
-              <p>
-                Jury Status:{" "}
-                <strong>
-                  {deliverable.isAssigned
-                    ? "It has been assigned a jury."
-                    : "It has not been assigned a jury."}
-                </strong>
-              </p>
-
-              {/* Conditionally render Assign Jury Button */}
-              {!deliverable.isAssigned && (
+        <div>
+          <ul style={styles.list}>
+            {currentDeliverables.map((deliverable) => (
+              <li key={deliverable.id} style={styles.listItem}>
+                <h3>{deliverable.title}</h3>
+                <p>{deliverable.description}</p>
+                <p>
+                  Due Date: {new Date(deliverable.dueDate).toLocaleString()}
+                </p>
+                <p>
+                  Jury Status:{" "}
+                  <strong>
+                    {deliverable.isAssigned
+                      ? "It has been assigned a jury."
+                      : "It has not been assigned a jury."}
+                  </strong>
+                </p>
+                {!deliverable.isAssigned && (
+                  <button
+                    style={styles.button}
+                    onClick={() => assignJury(deliverable.id)}
+                  >
+                    Assign Jury
+                  </button>
+                )}
                 <button
                   style={styles.button}
-                  onClick={() => assignJury(deliverable.id)}
+                  onClick={() => fetchGrades(deliverable.id)}
                 >
-                  Assign Jury
+                  See Grades
                 </button>
-              )}
-
-              {/* See Grades Button */}
-              <button
-                style={styles.button}
-                onClick={() => fetchGrades(deliverable.id)}
-              >
-                See Grades
-              </button>
-
-              {/* Show grades if available */}
-              {grades[deliverable.id] && grades[deliverable.id].length > 0 && (
-                <div style={styles.gradeSection}>
-                  <h4>Grades:</h4>
-                  {grades[deliverable.id].map((grade, index) => (
-                    <div key={index} style={styles.gradeItem}>
-                      <p>Grade: {grade.grade || "Not graded yet"}</p>
-                      <p>
-                        Feedback: {grade.feedback || "No feedback provided"}
-                      </p>
+                {grades[deliverable.id] &&
+                  grades[deliverable.id].length > 0 && (
+                    <div style={styles.gradeSection}>
+                      <h4>Grades:</h4>
+                      {grades[deliverable.id].map((grade, index) => (
+                        <div key={index} style={styles.gradeItem}>
+                          <p>Grade: {grade.grade || "Not graded yet"}</p>
+                          <p>
+                            Feedback: {grade.feedback || "No feedback provided"}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
+                {grades[deliverable.id] &&
+                  grades[deliverable.id].length === 0 && (
+                    <p>No grades submitted yet.</p>
+                  )}
+              </li>
+            ))}
+          </ul>
 
-              {/* Show message if grades are not available */}
-              {grades[deliverable.id] &&
-                grades[deliverable.id].length === 0 && (
-                  <p>No grades submitted yet.</p>
-                )}
-            </li>
-          ))}
-        </ul>
+          {/* Pagination Controls */}
+          <div style={styles.pagination}>
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              style={styles.paginationButton}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              style={styles.paginationButton}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -171,6 +208,22 @@ const styles = {
     marginBottom: "10px",
     padding: "5px",
     backgroundColor: "#f0f0f0",
+  },
+  pagination: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: "20px",
+  },
+  paginationButton: {
+    margin: "0 10px",
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    backgroundColor: "#4a148c",
+    color: "white",
   },
 };
 

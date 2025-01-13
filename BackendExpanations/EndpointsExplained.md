@@ -1,5 +1,48 @@
 ### Testing All Endpoints: A Comprehensive Guide
 
+### Table of Endpoints by Action, Role, Method, and Data
+
+Here is a comprehensive table summarizing all endpoints, their actions, roles, HTTP methods, data payloads (if any), and the total count of each method type.
+
+| **Action**                             | **Endpoint**                        | **Role**         | **Method** | **Body (if required)**                                                                                       |
+|----------------------------------------|-------------------------------------|------------------|------------|-------------------------------------------------------------------------------------------------------------|
+| **Fetch Student Dashboard**            | `/users/student-dashboard`          | Student          | GET        | N/A                                                                                                         |
+| **Fetch Professor Dashboard**          | `/users/professor-dashboard`        | Professor        | GET        | N/A                                                                                                         |
+| **Create a Project**                   | `/projects/create`                  | Professor        | POST       | `{ "title": "Project Title", "description": "Project Description" }`                                       |
+| **Edit a Project**                     | `/projects/:id`                     | Professor        | PUT        | `{ "title": "Updated Title", "description": "Updated Description" }`                                       |
+| **Create a Team**                      | `/teams/create`                     | Student          | POST       | `{ "name": "Team Name", "projectId": "<PROJECT_ID>" }`                                                     |
+| **Join a Team**                        | `/teams/join`                       | Student          | POST       | `{ "teamId": "<TEAM_ID>" }`                                                                                |
+| **Leave a Team**                       | `/teams/leave`                      | Student          | POST       | `{ "teamId": "<TEAM_ID>", "projectId": "<PROJECT_ID>" }`                                                   |
+| **Delete a Team**                      | `/teams/:teamId`                    | Professor        | DELETE     | N/A                                                                                                         |
+| **Remove a Team Member**               | `/teams/remove-user`                | Professor        | POST       | `{ "teamId": "<TEAM_ID>", "userId": "<USER_ID>" }`                                                         |
+| **Fetch Teams for a Project**          | `/teams/project/:projectId`         | Both             | GET        | N/A                                                                                                         |
+| **View Deliverables for a Team**       | `/deliverables/team/:teamId`        | Both             | GET        | N/A                                                                                                         |
+| **Submit a Deliverable**               | `/deliverables/create`              | Student          | POST       | `{ "teamId": "<TEAM_ID>", "projectId": "<PROJECT_ID>", "title": "Title", "description": "Description", ... }` |
+| **Assign Jury to a Deliverable**       | `/deliverables/assign-jury`         | Professor        | POST       | `{ "deliverableId": "<DELIVERABLE_ID>", "jurySize": 3 }`                                                   |
+| **Grade Deliverables (as Jury)**       | `/deliverables/grade`               | Student (Jury)   | POST       | `{ "deliverableId": "<DELIVERABLE_ID>", "grade": 95, "feedback": "Excellent work!" }`                      |
+| **Fetch Grades for a Deliverable**     | `/deliverables/:deliverableId/professor-grades` | Professor | GET        | N/A                                                                                                         |
+
+---
+
+### **HTTP Methods Summary**
+
+| **Method** | **Count** | **Description**                                                                 |
+|------------|-----------|---------------------------------------------------------------------------------|
+| **GET**    | 7         | Fetch dashboards, teams, deliverables, and grades.                              |
+| **POST**   | 6         | Create projects, teams, assign jury, grade deliverables, join/leave/remove team. |
+| **PUT**    | 1         | Edit projects.                                                                  |
+| **DELETE** | 1         | Delete teams.                                                                   |
+
+---
+
+### **Quick Analysis**
+
+- **GET Requests**: 7 endpoints focus on fetching data for dashboards, teams, deliverables, and grades.
+- **POST Requests**: 6 endpoints for actions such as creating, submitting, joining, grading, or assigning.
+- **PUT Requests**: 1 endpoint for updating project details.
+- **DELETE Requests**: 1 endpoint for deleting teams.
+
+This table and summary provide a clear roadmap for all actions and testing requirements within the application. 🚀
 
 ### **Before You Start**
 1. **Launch the Application**:
