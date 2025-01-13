@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import "./SeeDeliverablesToGrade.css"; // Import the CSS file
 
 const SeeDeliverablesToGrade = () => {
   const [deliverables, setDeliverables] = useState([]);
@@ -10,6 +11,8 @@ const SeeDeliverablesToGrade = () => {
     grade: "",
     feedback: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     const fetchDeliverables = async () => {
@@ -55,42 +58,70 @@ const SeeDeliverablesToGrade = () => {
     }
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDeliverables = deliverables.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  const totalPages = Math.ceil(deliverables.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+    }
+  };
+
   if (loading) {
-    return <p>Loading your deliverables...</p>;
+    return <p className="container">Loading your deliverables...</p>;
   }
 
   return (
-    <div>
-      <h2>Deliverables You Have to Grade</h2>
+    <div className="container">
+      <h2 className="header">Deliverables You Have to Grade</h2>
       {deliverables.length === 0 ? (
         <p>No deliverables to grade.</p>
       ) : (
         <div>
-          {deliverables.map((deliverable) => (
-            <div key={deliverable.deliverableId}>
-              <h3>{deliverable.title}</h3>
-              <p>{deliverable.description}</p>
-              <p>
+          {currentDeliverables.map((deliverable) => (
+            <div key={deliverable.deliverableId} className="deliverable-card">
+              <h3 className="deliverable-title">{deliverable.title}</h3>
+              <p className="deliverable-info">{deliverable.description}</p>
+              <p className="deliverable-info">
                 Due Date: {new Date(deliverable.dueDate).toLocaleDateString()}
               </p>
-              <p>Project: {deliverable.projectTitle}</p>
-              <p>Team: {deliverable.teamName}</p>
-              <p>Professor: {deliverable.professorName}</p>
-              <p>
+              <p className="deliverable-info">
+                Project: {deliverable.projectTitle}
+              </p>
+              <p className="deliverable-info">Team: {deliverable.teamName}</p>
+              <p className="deliverable-info">
+                Professor: {deliverable.professorName}
+              </p>
+              <p className="deliverable-info">
                 Submission Link:{" "}
                 <a
                   href={deliverable.submissionLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="submission-link"
                 >
                   View Submission
                 </a>
               </p>
-              <p>Grade: {deliverable.grade}</p>
-              <p>Feedback: {deliverable.feedback}</p>
+              <p className="deliverable-info">Grade: {deliverable.grade}</p>
+              <p className="deliverable-info">
+                Feedback: {deliverable.feedback}
+              </p>
 
               {editingDeliverable === deliverable.deliverableId ? (
-                <div>
+                <div className="edit-controls">
                   <input
                     type="number"
                     placeholder="Grade"
@@ -106,13 +137,21 @@ const SeeDeliverablesToGrade = () => {
                       setGradeData({ ...gradeData, feedback: e.target.value })
                     }
                   />
-                  <button onClick={handleSubmit}>Submit</button>
-                  <button onClick={() => setEditingDeliverable(null)}>
+                  <button className="submit-btn" onClick={handleSubmit}>
+                    Submit
+                  </button>
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setEditingDeliverable(null)}
+                  >
                     Cancel
                   </button>
                 </div>
               ) : (
-                <button onClick={() => handleEdit(deliverable)}>
+                <button
+                  className="submit-btn"
+                  onClick={() => handleEdit(deliverable)}
+                >
                   {deliverable.grade === "No Grade"
                     ? "Add Grade"
                     : "Edit Grade"}
@@ -120,6 +159,21 @@ const SeeDeliverablesToGrade = () => {
               )}
             </div>
           ))}
+
+          <div className="pagination">
+            <button onClick={handlePrevPage} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>
