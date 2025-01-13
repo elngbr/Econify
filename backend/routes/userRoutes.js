@@ -5,7 +5,10 @@ const {
   getProfile,
   getCurrentTeamForProject,
 } = require("../controllers/userController");
-const { getProfessorDashboard } = require("../controllers/professorController");
+const {
+  getProfessorDashboard,
+  getProfessorProjectStats,
+} = require("../controllers/professorController");
 const { getStudentDashboard } = require("../controllers/studentController");
 const {
   verifyToken,
@@ -25,6 +28,13 @@ router.get("/profile", verifyToken, getProfile);
 // Role-Specific Routes
 // Role-Specific Routes
 router.get("/student-dashboard", verifyToken, isStudent, getStudentDashboard);
+// Fetch professor project stats (new route)
+router.get(
+  "/professor/project-stats", // Define the route
+  verifyToken, // Ensure the user is authenticated
+  isProfessor, // Ensure the user is a professor
+  getProfessorProjectStats // Call the new controller
+);
 
 router.get(
   "/professor-dashboard",

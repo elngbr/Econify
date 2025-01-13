@@ -499,6 +499,7 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
               ],
             },
           ],
+          attributes: ["id", "title", "description", "dueDate", "submissionLink"], // Include description here
         },
       ],
     });
@@ -526,7 +527,7 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
         return {
           deliverableId: deliverable.id,
           title: deliverable.title,
-          description: deliverable.description,
+          description: deliverable.description, // Include description in the response
           dueDate: deliverable.dueDate,
           projectTitle: deliverable.team.project.title,
           teamName: deliverable.team.name,
@@ -549,6 +550,7 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
       .json({ error: "Server error while fetching deliverables." });
   }
 };
+
 const checkIfJuryAssigned = async (req, res) => {
   try {
     const { deliverableId } = req.params;

@@ -1,4 +1,3 @@
-// src/pages/Navbar.jsx
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext"; // Import AuthContext
@@ -32,6 +31,9 @@ const Navbar = () => {
           <>
             <Link to="/professor-dashboard" style={styles.link}>
               Professor Dashboard
+            </Link>
+            <Link to="/professor/project-stats" style={styles.link}>
+              Statistics
             </Link>
             <button onClick={handleLogout} style={styles.logoutButton}>
               Logout

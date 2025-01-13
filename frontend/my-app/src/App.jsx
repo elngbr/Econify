@@ -17,7 +17,7 @@ import Footer from "./pages/Footer";
 import Navbar from "./pages/Navbar"; // Import Navbar
 import NotFound from "./pages/NotFound"; // Import NotFound page
 import SeeDeliverablesToGrade from "./components/dashboard/SeeDeliverablesToGrade";
-
+import ProfessorStatsCharts from "./components/dashboard/ProfessorStatsCharts"; // Import the Statistics component
 const App = () => {
   return (
     <Router>
@@ -99,6 +99,14 @@ const App = () => {
               element={
                 <PrivateRoute role="student">
                   <ViewDeliverables />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/professor/project-stats"
+              element={
+                <PrivateRoute role="professor">
+                  <ProfessorStatsCharts />
                 </PrivateRoute>
               }
             />
