@@ -9,8 +9,8 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import api from "../../services/api"; // Ensure this is your Axios instance
 
-// Register required components for Chart.js
 ChartJS.register(
   BarElement,
   CategoryScale,
@@ -25,123 +25,58 @@ const ProfessorStatsChart = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mocked data
-    const mockData = [
-      {
-        projectId: 1,
-        projectTitle: "Statistics pj",
-        teamCount: 0,
-        deliverablesCount: 0,
-        teams: [],
-      },
-      {
-        projectId: 2,
-        projectTitle: "Geography pj",
-        teamCount: 1,
-        deliverablesCount: 2,
-        teams: [
-          {
-            teamId: 4,
-            teamName: "Fluturasii gingasi",
-            deliverableCount: 2,
-            memberCount: 2,
-          },
-        ],
-      },
-      {
-        projectId: 3,
-        projectTitle: "Medicine Project",
-        teamCount: 2,
-        deliverablesCount: 6,
-        teams: [
-          {
-            teamId: 7,
-            teamName: "PowerPraf",
-            deliverableCount: 6,
-            memberCount: 1,
-          },
-          {
-            teamId: 6,
-            teamName: "Stelele",
-            deliverableCount: 0,
-            memberCount: 1,
-          },
-        ],
-      },
-      {
-        projectId: 4,
-        projectTitle: "Sciences Project",
-        teamCount: 1,
-        deliverablesCount: 1,
-        teams: [
-          {
-            teamId: 8,
-            teamName: "Stelutele",
-            deliverableCount: 1,
-            memberCount: 1,
-          },
-        ],
-      },
-      {
-        projectId: 5,
-        projectTitle: "Multimedia Project",
-        teamCount: 1,
-        deliverablesCount: 2,
-        teams: [
-          {
-            teamId: 9,
-            teamName: "Calutii",
-            deliverableCount: 2,
-            memberCount: 1,
-          },
-        ],
-      },
-      {
-        projectId: 6,
-        projectTitle: "Databases Project",
-        teamCount: 0,
-        deliverablesCount: 0,
-        teams: [],
-      },
-    ];
+    const fetchStats = async () => {
+      try {
+        console.log("Fetching data from /professor/project-stats...");
+        const response = await api.get("/users/professor/project-stats");
+        console.log("Response Data:", response.data);
 
-    console.log("Mocked data:", mockData);
+        const projects = response.data.projects;
 
-    if (mockData && mockData.length > 0) {
-      const projectTitles = mockData.map((project) => project.projectTitle);
-      const teamCounts = mockData.map((project) => project.teamCount);
-      const deliverablesCounts = mockData.map(
-        (project) => project.deliverablesCount
-      );
-      const memberCounts = mockData.map((project) =>
-        project.teams.reduce((sum, team) => sum + team.memberCount, 0)
-      );
+        if (projects && projects.length > 0) {
+          const projectTitles = projects.map((project) => project.projectTitle);
+          const teamCounts = projects.map((project) => project.teamCount);
+          const deliverablesCounts = projects.map(
+            (project) => project.deliverablesCount
+          );
+          const memberCounts = projects.map((project) =>
+            project.teams.reduce((sum, team) => sum + team.memberCount, 0)
+          );
 
-      setChartData({
-        labels: projectTitles,
-        datasets: [
-          {
-            label: "Number of Teams",
-            data: teamCounts,
-            backgroundColor: "rgba(54, 162, 235, 0.6)",
-          },
-          {
-            label: "Number of Deliverables",
-            data: deliverablesCounts,
-            backgroundColor: "rgba(255, 99, 132, 0.6)",
-          },
-          {
-            label: "Number of Team Members",
-            data: memberCounts,
-            backgroundColor: "rgba(75, 192, 192, 0.6)",
-          },
-        ],
-      });
-    } else {
-      console.warn("No projects found in the mock data.");
-    }
+          setChartData({
+            labels: projectTitles,
+            datasets: [
+              {
+                label: "Number of Teams",
+                data: teamCounts,
+                backgroundColor: "rgba(54, 162, 235, 0.6)",
+              },
+              {
+                label: "Total Number of Deliverables",
+                data: deliverablesCounts,
+                backgroundColor: "rgba(255, 99, 132, 0.6)",
+              },
+              {
+                label: "Total Number of Team Members",
+                data: memberCounts,
+                backgroundColor: "rgba(75, 192, 192, 0.6)",
+              },
+            ],
+          });
+        } else {
+          console.warn("No projects found.");
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        if (error.response) {
+          console.error("Response Error Data:", error.response.data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setLoading(false);
+    fetchStats();
   }, []);
 
   if (loading) {
@@ -161,7 +96,7 @@ const ProfessorStatsChart = () => {
           plugins: {
             title: {
               display: true,
-              text: "Professor's Project Statistics",
+              text: "Figure 1: Visualization regarding distribution of Teams, Deliverables and Team Members across your projects.",
             },
             legend: {
               position: "top",
