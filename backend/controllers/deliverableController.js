@@ -85,12 +85,13 @@ const getDeliverablesByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
 
-    // Check if team exists first
+    // Check if team exists
     const team = await Team.findByPk(teamId);
     if (!team) {
       return res.status(404).json({ error: "Team not found." });
     }
 
+    // Fetch all deliverables for the team
     const deliverables = await Deliverable.findAll({
       where: { teamId },
       order: [["dueDate", "ASC"]],
@@ -102,17 +103,25 @@ const getDeliverablesByTeam = async (req, res) => {
         .json({ error: "No deliverables found for this team." });
     }
 
+    // Identify the last deliverable
     const lastDeliverable = deliverables.find((d) => d.lastDeliverable);
 
+    // Add a flag to each deliverable indicating whether it is the last deliverable
+    const deliverablesWithFlags = deliverables.map((deliverable) => ({
+      ...deliverable.dataValues, // Spread the existing deliverable data
+      isLastDeliverable: deliverable.id === (lastDeliverable?.id || null), // Flag as true if it matches the last deliverable
+    }));
+
     res.status(200).json({
-      deliverables,
-      lastDeliverableId: lastDeliverable ? lastDeliverable.id : null,
+      deliverables: deliverablesWithFlags, // Updated deliverables with flags
+      lastDeliverableId: lastDeliverable ? lastDeliverable.id : null, // Explicitly include the last deliverable ID
     });
   } catch (error) {
     console.error("Error fetching deliverables for team:", error.message);
     res.status(500).json({ error: "Error fetching deliverables." });
   }
 };
+
 
 const assignJuryToDeliverable = async (req, res) => {
   try {
@@ -431,7 +440,7 @@ const getAllDeliverablesForProfessor = async (req, res) => {
 
     // Fetch all teams supervised by this professor
     const teams = await Team.findAll({
-      where: { professorId }, // Only teams under the logged-in professor
+      where: { professorId },
       include: [
         {
           model: Deliverable,
@@ -441,7 +450,7 @@ const getAllDeliverablesForProfessor = async (req, res) => {
             "title",
             "description",
             "dueDate",
-            "lastDeliverable",
+            "lastDeliverable", // Include lastDeliverable field
           ],
         },
       ],
@@ -457,7 +466,10 @@ const getAllDeliverablesForProfessor = async (req, res) => {
     const results = teams.map((team) => ({
       teamId: team.id,
       teamName: team.name,
-      deliverables: team.deliverables,
+      deliverables: team.deliverables.map((deliverable) => ({
+        ...deliverable.toJSON(),
+        isLastDeliverable: deliverable.lastDeliverable, // Explicitly mark last deliverable
+      })),
     }));
 
     res.status(200).json({ results });
@@ -468,6 +480,7 @@ const getAllDeliverablesForProfessor = async (req, res) => {
       .json({ error: "Server error while fetching deliverables." });
   }
 };
+
 const getDeliverablesAssignedToStudent = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -499,7 +512,13 @@ const getDeliverablesAssignedToStudent = async (req, res) => {
               ],
             },
           ],
-          attributes: ["id", "title", "description", "dueDate", "submissionLink"], // Include description here
+          attributes: [
+            "id",
+            "title",
+            "description",
+            "dueDate",
+            "submissionLink",
+          ], // Include description here
         },
       ],
     });

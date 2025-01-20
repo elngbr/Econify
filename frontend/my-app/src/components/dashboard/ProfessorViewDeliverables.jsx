@@ -10,6 +10,7 @@ const ProfessorViewDeliverables = () => {
   const [currentPage, setCurrentPage] = useState(1); // Track current page
   const [itemsPerPage] = useState(5); // Items per page
 
+  // Fetch deliverables for the team
   const fetchDeliverables = async () => {
     try {
       const response = await api.get(`/deliverables/team/${teamId}`);
@@ -24,15 +25,11 @@ const ProfessorViewDeliverables = () => {
     }
   };
 
+  // Fetch grades for a deliverable
   const fetchGrades = async (deliverableId) => {
     try {
       const response = await api.get(
         `/deliverables/${deliverableId}/professor-grades`
-      );
-      console.log(
-        "Grades fetched for deliverable:",
-        deliverableId,
-        response.data.grades
       );
       setGrades((prevGrades) => ({
         ...prevGrades,
@@ -46,6 +43,7 @@ const ProfessorViewDeliverables = () => {
     }
   };
 
+  // Assign jury to a deliverable
   const assignJury = async (deliverableId) => {
     const jurySize = prompt("Enter the number of jurors to assign:");
     if (!jurySize || isNaN(jurySize) || parseInt(jurySize) <= 0) {
@@ -112,8 +110,19 @@ const ProfessorViewDeliverables = () => {
         <div>
           <ul style={styles.list}>
             {currentDeliverables.map((deliverable) => (
-              <li key={deliverable.id} style={styles.listItem}>
-                <h3>{deliverable.title}</h3>
+              <li
+                key={deliverable.id}
+                style={{
+                  ...styles.listItem,
+                  ...(deliverable.lastDeliverable && styles.lastDeliverable), // Highlight last deliverable
+                }}
+              >
+                <h3>
+                  {deliverable.title}
+                  {deliverable.lastDeliverable && (
+                    <span style={styles.lastLabel}> (Last Deliverable)</span>
+                  )}
+                </h3>
                 <p>{deliverable.description}</p>
                 <p>
                   Due Date: {new Date(deliverable.dueDate).toLocaleString()}
@@ -122,8 +131,8 @@ const ProfessorViewDeliverables = () => {
                   Jury Status:{" "}
                   <strong>
                     {deliverable.isAssigned
-                      ? "It has been assigned a jury."
-                      : "It has not been assigned a jury."}
+                      ? "Jury assigned."
+                      : "No jury assigned."}
                   </strong>
                 </p>
                 {!deliverable.isAssigned && (
@@ -191,8 +200,22 @@ const ProfessorViewDeliverables = () => {
 const styles = {
   container: { padding: "20px" },
   heading: { textAlign: "center", color: "#4a148c", marginBottom: "20px" },
-  list: { listStyle: "none", padding: 0 },
-  listItem: { marginBottom: "15px", padding: "15px", border: "1px solid #ccc" },
+  list: {
+    listStyle: "none",
+    padding: 0,
+  },
+  listItem: {
+    marginBottom: "15px",
+    padding: "15px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    backgroundColor: "#fff",
+  },
+  lastDeliverable: {
+    border: "2px solid #e91e63",
+    backgroundColor: "#fce4ec",
+  },
+  lastLabel: { color: "#e91e63", fontWeight: "bold" },
   button: {
     backgroundColor: "#4a148c",
     color: "#fff",
