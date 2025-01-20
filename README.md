@@ -53,3 +53,48 @@ Aplicația are și un sistem de permisiuni. Doar un membru al juriului poate să
 
 Exemple
 ???
+
+![image](https://github.com/user-attachments/assets/6bedbf4b-5ee6-496e-95ca-7bf3182f5ddf)
+![image](https://github.com/user-attachments/assets/f2399762-6642-4cdf-b0b0-95b73db57907)
+![image](https://github.com/user-attachments/assets/4e476649-a245-419c-a18b-2e13a84c91a2)
+![image](https://github.com/user-attachments/assets/fc018da8-29ab-4843-ad01-40017994791f)
+Here's a justification for the choice of the purple color theme for the Econify application, based on the color wheel provided and practical examples:
+
+---
+
+### **Justification for Using Purple in Econify**
+
+#### **1. Differentiation from ASE.ro**
+ASE.ro (Academia de Studii Economice) already employs a blue-themed color palette, which is often associated with institutional and academic platforms. To ensure Econify offers a fresh and distinct experience, avoiding blue helps create a psychological separation from existing university systems. Students are less likely to feel they're using a standard university tool and more likely to view Econify as an innovative and engaging platform.
+
+By using purple, Econify emphasizes:
+- **Creativity and Innovation**: Purple is often linked with creativity, inspiration, and originality—qualities Econify embodies by introducing a novel anonymous grading system.
+- **Sophistication and Modernity**: Purple hues are widely regarded as sophisticated and modern, aligning with Econify's cutting-edge technology stack (React.js, Node.js, REST API, etc.).
+
+#### **2. Psychological Impact of Purple**
+Purple evokes a sense of trustworthiness, independence, and forward-thinking. These align well with Econify’s purpose of fostering fair and anonymous peer evaluations, emphasizing equality and transparency.
+
+The softer tones of purple (as seen in the UI) maintain a welcoming and non-intimidating environment while being visually appealing.
+
+---
+
+#### **3. Examples of Applications Using Purple**
+
+1. **Twitch**: The live-streaming platform uses purple to reflect creativity and engagement. Its target audience—students and young professionals—finds it vibrant and exciting, much like Econify’s target demographic.
+   
+2. **Discord**: Another popular app among students, Discord employs a purple theme to signify community and collaboration. Econify mirrors this sense of community, as students collaborate and evaluate each other’s projects.
+
+3. **Yahoo!**: The platform’s purple branding has long signified a blend of sophistication and innovation, aligning well with Econify’s modern approach.
+
+---
+
+#### **4. Alignment with the Color Wheel**
+The analogous color scheme chosen on the color wheel provides harmonious tones, ranging from light lavender (#D8DBF2) to vibrant purple (#9B34F5). This creates a visually cohesive UI:
+- **Primary Action Buttons**: Vibrant purple (#9B34F5) commands attention without overwhelming the user.
+- **Background and Cards**: Subtle shades like lavender ensure readability and comfort during extended use.
+
+---
+
+By intentionally choosing purple, Econify sets itself apart as an innovative, student-friendly, and modern platform while maintaining an accessible and professional aesthetic. This strategic decision ensures users see it as more than just another university app—it’s a tool they trust and enjoy using.
+
+
