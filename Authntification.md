@@ -1,8 +1,6 @@
 ### Authentication Process Explanation
+![image](https://github.com/user-attachments/assets/63719496-14b1-4215-bfef-a8bb00e0598e)
 
-In your app, the authentication process consists of **user registration, login, and session management** (through JSON Web Tokens - JWT). Let me break it down step-by-step:
-
----
 
 ### **1. User Registration**
 
