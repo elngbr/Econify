@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import EditDeliverable from "./EditDeliverable";
+import SendDeliverable from "./SendDeliverable"; // Import SendDeliverable component
 
 const ViewDeliverables = () => {
   const { teamId } = useParams();
@@ -9,11 +10,18 @@ const ViewDeliverables = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
   const [grades, setGrades] = useState({}); // Store grades for each deliverable
+  const [lastDeliverablePassed, setLastDeliverablePassed] = useState(false); // Tracks if the last deliverable exists
+
+  const navigate = useNavigate();
 
   const fetchDeliverables = async () => {
     try {
       const response = await api.get(`/deliverables/team/${teamId}`);
-      setDeliverables(response.data.deliverables || []);
+      const deliverables = response.data.deliverables || [];
+      setDeliverables(deliverables);
+  
+      // Set lastDeliverablePassed based on backend response
+      setLastDeliverablePassed(response.data.hasLastDeliverable);
     } catch (error) {
       console.error(
         "Error fetching deliverables:",
@@ -23,6 +31,7 @@ const ViewDeliverables = () => {
       setLoading(false);
     }
   };
+  
 
   const fetchGrades = async (deliverableId) => {
     try {
@@ -64,70 +73,78 @@ const ViewDeliverables = () => {
       ) : deliverables.length === 0 ? (
         <p>No deliverables found for this team.</p>
       ) : (
-        <ul style={styles.list}>
-          {deliverables.map((deliverable) => (
-            <li
-              key={deliverable.id}
-              style={{
-                ...styles.listItem,
-                backgroundColor: deliverable.lastDeliverable
-                  ? "#fce4ec"
-                  : "#fff",
-              }}
-            >
-              <h3>
-                {deliverable.title}
-                {deliverable.lastDeliverable && " (Last Deliverable)"}
-              </h3>
-              <p>{deliverable.description}</p>
-              <p>Due Date: {new Date(deliverable.dueDate).toLocaleString()}</p>
-              {deliverable.submissionLink && (
-                <p>
-                  <a
-                    href={deliverable.submissionLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={styles.link}
-                  >
-                    View Submission
-                  </a>
-                </p>
-              )}
-              {new Date() < new Date(deliverable.dueDate) ? (
-                <button
-                  style={styles.editButton}
-                  onClick={() => handleEdit(deliverable)}
-                >
-                  Edit/Delete
-                </button>
-              ) : (
-                <p style={styles.passedMessage}>Editing Time Passed</p>
-              )}
-              <button
-                style={styles.gradeButton}
-                onClick={() => fetchGrades(deliverable.id)}
+        <>
+          <ul style={styles.list}>
+            {deliverables.map((deliverable) => (
+              <li
+                key={deliverable.id}
+                style={{
+                  ...styles.listItem,
+                  backgroundColor: deliverable.lastDeliverable
+                    ? "#fce4ec"
+                    : "#fff",
+                }}
               >
-                See Grades
-              </button>
-              {/* Show grades if fetched */}
-              {grades[deliverable.id] && (
-                <div style={styles.gradeSection}>
-                  <h4>Grades:</h4>
-                  {grades[deliverable.id].length > 0 ? (
-                    grades[deliverable.id].map((grade, index) => (
-                      <div key={index} style={styles.gradeItem}>
-                        <p>Grade: {grade.grade}</p>
-                        <p>Feedback: {grade.feedback}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No grades available for this deliverable yet.</p>
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                <h3>
+                  {deliverable.title}
+                  {deliverable.lastDeliverable && " (Last Deliverable)"}
+                </h3>
+                <p>{deliverable.description}</p>
+                <p>
+                  Due Date: {new Date(deliverable.dueDate).toLocaleString()}
+                </p>
+                {deliverable.submissionLink && (
+                  <p>
+                    <a
+                      href={deliverable.submissionLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={styles.link}
+                    >
+                      View Submission
+                    </a>
+                  </p>
+                )}
+                {new Date() < new Date(deliverable.dueDate) ? (
+                  <button
+                    style={styles.editButton}
+                    onClick={() => handleEdit(deliverable)}
+                  >
+                    Edit/Delete
+                  </button>
+                ) : (
+                  <p style={styles.passedMessage}>Editing Time Passed</p>
+                )}
+                <button
+                  style={styles.gradeButton}
+                  onClick={() => fetchGrades(deliverable.id)}
+                >
+                  See Grades
+                </button>
+                {/* Show grades if fetched */}
+                {grades[deliverable.id] && (
+                  <div style={styles.gradeSection}>
+                    <h4>Grades:</h4>
+                    {grades[deliverable.id].length > 0 ? (
+                      grades[deliverable.id].map((grade, index) => (
+                        <div key={index} style={styles.gradeItem}>
+                          <p>Grade: {grade.grade}</p>
+                          <p>Feedback: {grade.feedback}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>No grades available for this deliverable yet.</p>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+          {/* Only show SendDeliverable button if lastDeliverablePassed is false */}
+          {!lastDeliverablePassed && (
+            <SendDeliverable projectId={1} teamId={teamId} /> // Replace projectId with actual data
+          )}
+        </>
       )}
       {selectedDeliverable && (
         <EditDeliverable

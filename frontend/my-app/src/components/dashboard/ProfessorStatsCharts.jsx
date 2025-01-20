@@ -9,7 +9,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import api from "../../services/api"; // Ensure this is your Axios instance
+import api from "../../services/api"; 
 
 ChartJS.register(
   BarElement,
