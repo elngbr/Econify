@@ -1,17 +1,20 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User,Team } = require("../db/models");
+const { User, Team } = require("../db/models");
 
 // Register User
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role, department, major, year, office } =
-      req.body;
+    const { name, email, password, department, major, year, office } = req.body; // Removed 'role' from the request body
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ error: "Email already in use." });
+    }
+
+    // Automatically assign role based on email
+    const role = email.includes("stud.ase") ? "student" : "professor";
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -35,7 +38,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Login User
+
 // Login User
 const loginUser = async (req, res) => {
   try {
@@ -104,7 +107,14 @@ const getCurrentTeamForProject = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching current team:", error.message);
-    res.status(500).json({ error: "Server error while fetching current team." });
+    res
+      .status(500)
+      .json({ error: "Server error while fetching current team." });
   }
 };
-module.exports = { registerUser, loginUser, getProfile, getCurrentTeamForProject };
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  getCurrentTeamForProject,
+};
