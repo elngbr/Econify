@@ -7,21 +7,42 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
-    role: "student", // Default role
   });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validatePassword = (password) => {
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const newErrors = {};
+
+    // Validate password
+    if (!validatePassword(formData.password)) {
+      newErrors.password =
+        "Password must be at least 8 characters long, include one uppercase letter, one lowercase letter, one number, and one special character.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
-      await api.post("/users/register", formData);
-      navigate("/login"); // Redirect to login after registration
+      await api.post("/users/register", formData); // Role will be assigned automatically by the backend
+      navigate("/login");
     } catch (error) {
       console.error("Registration error:", error);
+      alert("Failed to register. Please try again.");
     }
   };
 
@@ -61,13 +82,7 @@ const Register = () => {
             onChange={handleChange}
             required
           />
-        </div>
-        <div className="field">
-          <label>Role</label>
-          <select name="role" value={formData.role} onChange={handleChange} required>
-            <option value="student">Student</option>
-            <option value="professor">Professor</option>
-          </select>
+          {errors.password && <p className="error">{errors.password}</p>}
         </div>
         <button type="submit" className="submit-button">
           Register
