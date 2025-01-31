@@ -1,16 +1,16 @@
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext"; // Import AuthContext
+import { AuthContext } from "../context/AuthContext"; 
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext); // Access user and logout function from AuthContext
+  const { user, logout } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate("/"); // Redirect to Home after logout
-    window.location.reload(); // Force a re-render to ensure navbar updates
-  };
+    navigate("/"); 
+    window.location.reload(); 
+    };
 
   return (
     <nav style={styles.navbar}>
